@@ -1,37 +1,47 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, Switch } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
+import { Link, useNavigate } from 'react-router-dom';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAuth } from '../hooks/useAuth';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 
-const Navbar = ({ vrMode, onVrModeChange }) => {
-  const { currentUser } = useAuth();
+const Navbar = ({ showBackButton = false }) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      navigate('/auth'); // Redirect to login page after logout
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
+  const handleBack = () => {
+    navigate(-1); // Go back to the previous page
+  };
+
   return (
-    <AppBar position="static" className="navbar">
+    <AppBar position="static" sx={{ backgroundColor: 'primary.main' }}>
       <Toolbar>
-        <Typography variant="h6" component="div" className="navbar-brand">
-          SurgiVerse
+        {showBackButton && (
+          <IconButton edge="start" color="inherit" aria-label="back" onClick={handleBack} sx={{ mr: 2 }}>
+            <ArrowBackIcon />
+          </IconButton>
+        )}
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            SurgiVerse
+          </Link>
         </Typography>
-        <Box sx={{ flexGrow: 1 }} />
-        {currentUser && (
+        {user && (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="body1" sx={{ mr: 2 }}>
-              {currentUser.email}
-            </Typography>
-            <div className="vr-mode-toggle">
-              <Typography>VR Mode</Typography>
-              <Switch checked={vrMode} onChange={onVrModeChange} />
-            </div>
-            <Button color="inherit" onClick={handleLogout} sx={{ ml: 2 }}>
+            <Button color="inherit" component={Link} to="/profile">
+              Profile
+            </Button>
+            <Button color="inherit" onClick={handleLogout}>
               Logout
             </Button>
           </Box>

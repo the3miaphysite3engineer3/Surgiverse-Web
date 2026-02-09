@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Auth from './pages/Auth';
 import ProtectedRoute from './components/ProtectedRoute';
 import SurgeryDetails from './pages/SurgeryDetails';
+import Profile from './pages/Profile'; // Import the Profile component
 import './styles.css';
 
 const theme = createTheme({
@@ -52,6 +53,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SurgeryDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route // Add the new Profile route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />

@@ -1,25 +1,31 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { createContext, useState, useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase';
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const auth = getAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      setCurrentUser(user);
+    // Ensure Firebase auth logic runs only on the client side
+    if (typeof window !== 'undefined') {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUser(user);
+        setLoading(false);
+      });
+      return unsubscribe;
+    } else {
       setLoading(false);
-    });
-
-    return unsubscribe;
-  }, [auth]);
+    }
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading }}>
-      {children}
+    <AuthContext.Provider value={{ user, loading, userEmail: user?.email }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
+
+export { AuthContext, AuthProvider };

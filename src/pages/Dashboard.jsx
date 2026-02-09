@@ -10,8 +10,7 @@ const Dashboard = () => {
   const [surgeriesWithAttempts, setSurgeriesWithAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [vrMode, setVrMode] = useState(false);
-  const { currentUser } = useAuth();
+  const { user } = useAuth(); // Correctly destructure 'user'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,9 +22,9 @@ const Dashboard = () => {
 
         // Fetch attempts if user is logged in
         let attemptsList = [];
-        if (currentUser) {
+        if (user) { // Use 'user' here
           const attemptsCollection = collection(db, 'attempts');
-          const q = query(attemptsCollection, where('userId', '==', currentUser.uid));
+          const q = query(attemptsCollection, where('uid', '==', user.uid)); // And here
           const attemptsSnapshot = await getDocs(q);
           attemptsList = attemptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
@@ -33,7 +32,7 @@ const Dashboard = () => {
         // Merge surgeries with their corresponding attempts
         const mergedData = surgeryList.map(surgery => ({
           ...surgery,
-          attempts: attemptsList.filter(attempt => attempt.surgeryId === surgery.id)
+          attempts: attemptsList.filter(attempt => attempt.surgery_id === surgery.id)
         }));
 
         setSurgeriesWithAttempts(mergedData);
@@ -46,11 +45,7 @@ const Dashboard = () => {
     };
 
     fetchData();
-  }, [currentUser]);
-
-  const handleVrModeChange = (event) => {
-    setVrMode(event.target.checked);
-  };
+  }, [user]); // And in the dependency array
 
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
@@ -62,7 +57,7 @@ const Dashboard = () => {
 
   return (
     <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh' }}>
-      <Navbar vrMode={vrMode} onVrModeChange={handleVrModeChange} />
+      <Navbar />
       <Container maxWidth="lg" className="dashboard-container">
         <Typography variant="h4" component="h1" className="dashboard-title">
           SurgiVerse Dashboard
@@ -83,12 +78,12 @@ const Dashboard = () => {
 
                 <Box className="attempts-section">
                   <Typography variant="h6" className="attempts-title">Your Attempts</Typography>
-                  {currentUser ? (
+                  {user ? (
                     surgery.attempts.length > 0 ? (
                       <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
                         {surgery.attempts.map((attempt, index) => (
-                          <li key={index} className="attempt-item">
-                            <strong>Attempt #{index + 1}:</strong> Score - {attempt.score}, Time - {attempt.timeTaken}s
+                          <li key={attempt.id} className="attempt-item">
+                            <strong>Attempt #{index + 1}:</strong> Score - {attempt.score}, Time - {attempt.completionTimeSeconds.toFixed(2)}s
                           </li>
                         ))}
                       </ul>
@@ -101,19 +96,9 @@ const Dashboard = () => {
                 </Box>
 
                 <Box sx={{ mt: 2, textAlign: 'right' }}>
-                  {vrMode ? (
-                    <Button 
-                      variant="contained" 
-                      className="launch-button"
-                      onClick={() => console.log(`Launching VR scene: ${surgery.sceneName}`)}
-                    >
-                      Launch in VR
-                    </Button>
-                  ) : (
-                    <Button component={Link} to={`/surgery/${surgery.id}`} variant="contained" color="primary">
-                      View Details
-                    </Button>
-                  )}
+                  <Button component={Link} to={`/surgery/${surgery.id}`} variant="contained" color="primary">
+                    View Details
+                  </Button>
                 </Box>
               </Paper>
             </Grid>

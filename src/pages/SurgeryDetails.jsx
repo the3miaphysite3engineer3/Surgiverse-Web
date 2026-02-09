@@ -2,9 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import { getAuth } from 'firebase/auth';
-import { Box, Container, Typography, Paper, CircularProgress, List, ListItem, ListItemText, Divider, Grid } from '@mui/material';
+import { useAuth } from '../hooks/useAuth';
+import { 
+    Box, Container, Typography, Paper, CircularProgress, List, ListItem, 
+    ListItemText, Divider, Grid, Button, Modal, Accordion, AccordionSummary, 
+    AccordionDetails 
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Navbar from '../components/Navbar';
+import AIAssistant from '../components/AIAssistant';
 
 const SurgeryDetails = () => {
   const { id } = useParams();
@@ -12,8 +18,9 @@ const SurgeryDetails = () => {
   const [attempts, setAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const auth = getAuth();
-  const currentUser = auth.currentUser;
+  const [selectedAttempt, setSelectedAttempt] = useState(null);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchSurgeryDetails = async () => {
@@ -28,9 +35,9 @@ const SurgeryDetails = () => {
           setError('Surgery not found.');
         }
 
-        if (currentUser) {
+        if (user) {
           const attemptsCollection = collection(db, 'attempts');
-          const q = query(attemptsCollection, where('surgeryId', '==', id), where('userId', '==', currentUser.uid));
+          const q = query(attemptsCollection, where('surgery_id', '==', id), where('uid', '==', user.uid));
           const attemptsSnapshot = await getDocs(q);
           const attemptsList = attemptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setAttempts(attemptsList);
@@ -44,7 +51,17 @@ const SurgeryDetails = () => {
     };
 
     fetchSurgeryDetails();
-  }, [id, currentUser]);
+  }, [id, user]);
+
+  const handleOpenAIAssistant = (attempt) => {
+    setSelectedAttempt(attempt);
+    setIsAIAssistantOpen(true);
+  };
+
+  const handleCloseAIAssistant = () => {
+    setSelectedAttempt(null);
+    setIsAIAssistantOpen(false);
+  };
 
   if (loading) {
     return (
@@ -82,62 +99,74 @@ const SurgeryDetails = () => {
           </Typography>
           
           <Grid container spacing={3}>
-            {surgery.patientInfo && (
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6">Patient Information</Typography>
-                <Typography><strong>Name:</strong> {surgery.patientInfo.name}</Typography>
-                <Typography><strong>Age:</strong> {surgery.patientInfo.age}</Typography>
-                <Typography><strong>Gender:</strong> {surgery.patientInfo.gender}</Typography>
+            {surgery.defaultMetrics && (
+                <Grid item xs={12} md={6}>
+                    <Typography variant="h6">Default Metrics</Typography>
+                    <List dense>
+                        <ListItem>
+                            <ListItemText primary="Target Time" secondary={`${surgery.defaultMetrics.targetTimeSeconds} seconds`} />
+                        </ListItem>
+                        <ListItem>
+                            <ListItemText primary="Max Bleeding Level" secondary={surgery.defaultMetrics.maxBleedingLevel} />
+                        </ListItem>
+                        <ListItem>
+                            <ListItemText primary="Required Suction Power" secondary={surgery.defaultMetrics.requiredSuctionPower} />
+                        </ListItem>
+                        <ListItem>
+                            <ListItemText primary="Safe Zone" secondary={surgery.defaultMetrics.safeZone} />
+                        </ListItem>
+                    </List>
               </Grid>
             )}
-            {surgery.date && (
+            {surgery.requiredSteps && (
               <Grid item xs={12} md={6}>
-                <Typography variant="h6">Procedure Details</Typography>
-                <Typography><strong>Date:</strong> {surgery.date}</Typography>
-                <Typography><strong>Duration:</strong> {surgery.duration}</Typography>
-                <Typography><strong>Surgeons:</strong> {surgery.surgeons?.join(', ')}</Typography>
+                <Typography variant="h6">Required Steps</Typography>
+                <List dense>
+                  {surgery.requiredSteps.map((step, index) => (
+                    <ListItem key={index}>
+                      <ListItemText primary={`${index + 1}. ${step}`} />
+                    </ListItem>
+                  ))}
+                </List>
               </Grid>
             )}
           </Grid>
-
-          {surgery.metrics && (
-            <Box sx={{ my: 3 }}>
-              <Typography variant="h6">Metrics</Typography>
-              <Typography>- <strong>Blood Loss:</strong> {surgery.metrics.bloodLoss}</Typography>
-              <Typography>- <strong>Complications:</strong> {surgery.metrics.complications}</Typography>
-              <Typography>- <strong>Outcome:</strong> {surgery.metrics.outcome}</Typography>
-            </Box>
-          )}
-
-          {surgery.requiredSteps && (
-            <Box sx={{ my: 3 }}>
-              <Typography variant="h6">Required Steps</Typography>
-              <List>
-                {surgery.requiredSteps.map((step, index) => (
-                  <ListItem key={index} disablePadding>
-                    <ListItemText primary={`${index + 1}. ${step}`} />
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
-          )}
 
           <Divider sx={{ my: 3 }} />
 
           <Box>
             <Typography variant="h5" sx={{ mb: 2 }}>Your Attempts</Typography>
-            {currentUser ? (
+            {user ? (
               attempts.length > 0 ? (
-                <List>
-                  {attempts.map((attempt, index) => (
-                    <ListItem key={attempt.id} disablePadding>
-                      <ListItemText 
-                        primary={`Attempt #${index + 1}`}
-                        secondary={`Score: ${attempt.score}, Time Taken: ${attempt.timeTaken}`}
-                      />
-                    </ListItem>
+                <Box>
+                  {attempts.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds).map((attempt, index) => (
+                    <Accordion key={attempt.id} sx={{ mb: 1 }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <ListItemText 
+                                primary={`Attempt #${attempts.length - index}`}
+                                secondary={`Date: ${new Date(attempt.timestamp.seconds * 1000).toLocaleString()} | Score: ${attempt.score} | Time: ${attempt.completionTimeSeconds ? attempt.completionTimeSeconds.toFixed(2) : 'N/A'}s | Successful: ${attempt.isSuccessful ? 'Yes' : 'No'}`}
+                            />
+                            <Button variant="outlined" size="small" onClick={(e) => {e.stopPropagation(); handleOpenAIAssistant(attempt);}} sx={{ ml: 2 }}>
+                                Discuss with AI
+                            </Button>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <Typography variant="h6" sx={{ mb: 1 }}>Attempt Logs</Typography>
+                            <List dense>
+                                {attempt.logs && attempt.logs.length > 0 ? (
+                                    attempt.logs.map((log, logIndex) => (
+                                        <ListItem key={logIndex}>
+                                            <ListItemText primary={log} />
+                                        </ListItem>
+                                    ))
+                                ) : (
+                                    <Typography>No logs available for this attempt.</Typography>
+                                )}
+                            </List>
+                        </AccordionDetails>
+                    </Accordion>
                   ))}
-                </List>
+                </Box>
               ) : (
                 <Typography>You have not attempted this surgery yet.</Typography>
               )
@@ -147,6 +176,15 @@ const SurgeryDetails = () => {
           </Box>
         </Paper>
       </Container>
+      <Modal
+        open={isAIAssistantOpen}
+        onClose={handleCloseAIAssistant}
+        aria-labelledby="ai-assistant-modal-title"
+        aria-describedby="ai-assistant-modal-description"
+        sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+      >
+          {selectedAttempt && <AIAssistant attempt={selectedAttempt} onClose={handleCloseAIAssistant} />}
+      </Modal>
     </Box>
   );
 };
