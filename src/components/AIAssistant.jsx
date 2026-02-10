@@ -1,93 +1,188 @@
-import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, CircularProgress, Paper, IconButton } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Box,
+  Typography,
+  Button,
+  CircularProgress,
+  Paper,
+  IconButton,
+  TextField
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
+import ReactMarkdown from 'react-markdown';
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp
+} from 'firebase/firestore';
+import { db } from '../firebase';
 
-// IMPORTANT: Replace with your actual API key
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+// --- IMPORTANT ---
+const API_KEY = "AIzaSyBmjhGdLkFH8aiXWnuOsnt4zVeNcSfjJKE";
+// -----------------
 
 const AIAssistant = ({ attempt, onClose }) => {
-  const [message, setMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const chatEndRef = useRef(null);
 
-  const genAI = new GoogleGenerativeAI(API_KEY);
+  const ai = new GoogleGenAI({ apiKey: API_KEY });
 
-  const handleSendMessage = async () => {
-    if (!message.trim()) return;
+  const messagesRef = attempt
+    ? collection(db, 'attemptChats', attempt.id, 'messages')
+    : null;
 
-    const userMessage = { role: 'user', content: message };
-    setChatHistory(prev => [...prev, userMessage]);
-    setMessage('');
+  // Auto-scroll
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
+  // Load chat history
+  useEffect(() => {
+    if (!messagesRef) return;
+
+    const q = query(messagesRef, orderBy('createdAt'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMessages(snapshot.docs.map(doc => doc.data()));
+    });
+
+    return () => unsubscribe();
+  }, [attempt]);
+
+  // Initial AI analysis (only once)
+  useEffect(() => {
+    if (!attempt || messages.length > 0) return;
+
+    const initialPrompt = `
+Analyze the following surgery attempt.
+Use clear markdown formatting.
+
+- **Surgeon:** ${attempt.surgeon}
+- **Procedure:** ${attempt.procedureName}
+- **Outcome:** ${attempt.isSuccessful ? 'Successful' : 'Failed'}
+    `;
+
+    sendToAI(initialPrompt);
+  }, [attempt, messages]);
+
+  const saveMessage = async (role, content) => {
+    await addDoc(messagesRef, {
+      role,
+      content,
+      createdAt: serverTimestamp()
+    });
+  };
+
+  const sendToAI = async (prompt) => {
     setLoading(true);
-    setError(null);
 
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-      
-      const chat = model.startChat({
-        history: [
-          {
-            role: "user",
-            content: `You are an expert surgical instructor. A student has just completed a simulated surgery and has some questions. Here is the data for their attempt. Please analyze it and prepare to answer their questions.\n\n**Procedure:** ${attempt.procedureName}\n**Successful:** ${attempt.isSuccessful ? 'Yes' : 'No'}\n**Score:** ${attempt.score}\n**Completion Time:** ${attempt.completionTimeSeconds.toFixed(2)} seconds\n\n**Attempt Logs:**\n${attempt.logs.join('\n')}`,
-          },
-          {
-            role: "model",
-            content: "I have reviewed the data for this attempt. I am ready to help the student.",
-          },
-        ],
-        generationConfig: {
-          maxOutputTokens: 1000,
-        },
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt
       });
 
-      const result = await chat.sendMessage(message);
-      const response = await result.response;
-      const text = response.text();
-      
-      const modelMessage = { role: 'model', content: text };
-      setChatHistory(prev => [...prev, modelMessage]);
-
+      await saveMessage('ai', response.text);
     } catch (err) {
-      console.error("Gemini API error:", err);
-      setError('Sorry, I am having trouble connecting to the AI assistant right now. Please try again later.');
+      console.log(err)
+      await saveMessage('ai', '⚠️ Error generating response.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    const userMessage = input;
+    setInput('');
+
+    await saveMessage('user', userMessage);
+    sendToAI(userMessage);
+  };
+
+  const bubbleStyles = {
+    user: {
+      alignSelf: 'flex-end',
+      backgroundColor: '#1976d2',
+      color: '#fff',
+      borderRadius: '16px 16px 4px 16px',
+      padding: '10px 14px',
+      maxWidth: '75%'
+    },
+    ai: {
+      alignSelf: 'flex-start',
+      backgroundColor: '#e0e0e0',
+      color: '#000',
+      borderRadius: '16px 16px 16px 4px',
+      padding: '10px 14px',
+      maxWidth: '75%'
+    }
+  };
+
   return (
-    <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '70vh', width: '500px' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+    <Paper sx={{ p: 2, height: '70vh', width: '500px', display: 'flex', flexDirection: 'column' }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography variant="h6">AI Assistant</Typography>
-        <IconButton onClick={onClose} size="small">
-            <CloseIcon />
+        <IconButton onClick={onClose}>
+          <CloseIcon />
         </IconButton>
       </Box>
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 2, p: 1, border: '1px solid #eee', borderRadius: 1 }}>
-        {chatHistory.map((chat, index) => (
-          <Box key={index} sx={{ mb: 1.5, textAlign: chat.role === 'user' ? 'right' : 'left' }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>{chat.role === 'user' ? 'You' : 'AI'}</Typography>
-            <Paper elevation={1} sx={{ p: 1.5, display: 'inline-block', backgroundColor: chat.role === 'user' ? 'primary.light' : 'grey.200' }}>
-              <Typography variant="body2">{chat.content}</Typography>
-            </Paper>
+
+      {/* Chat */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          overflowY: 'auto',
+          p: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+          backgroundColor: '#f5f5f5',
+          borderRadius: 2
+        }}
+      >
+        {messages.map((msg, i) => (
+          <Box key={i} sx={bubbleStyles[msg.role]}>
+            {msg.role === 'ai'
+              ? <ReactMarkdown>{msg.content}</ReactMarkdown>
+              : <Typography>{msg.content}</Typography>
+            }
           </Box>
         ))}
-        {loading && <CircularProgress size={24} sx={{ display: 'block', margin: 'auto' }}/>}
-        {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
+
+        {loading && (
+          <Box sx={bubbleStyles.ai}>
+            <CircularProgress size={18} />
+          </Box>
+        )}
+
+        <div ref={chatEndRef} />
       </Box>
-      <Box sx={{ display: 'flex' }}>
+
+      {/* Input */}
+      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
         <TextField
           fullWidth
-          variant="outlined"
-          placeholder="Ask about your attempt..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          disabled={loading}
+          multiline
+          maxRows={3}
+          placeholder="Type a message…"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
         />
-        <Button variant="contained" color="primary" onClick={handleSendMessage} disabled={loading} sx={{ ml: 1 }}>
+        <Button variant="contained" onClick={handleSend} disabled={loading}>
           Send
         </Button>
       </Box>

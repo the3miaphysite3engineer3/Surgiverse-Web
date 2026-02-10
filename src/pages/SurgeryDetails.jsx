@@ -11,6 +11,8 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Navbar from '../components/Navbar';
 import AIAssistant from '../components/AIAssistant';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const SurgeryDetails = () => {
   const { id } = useParams();
@@ -63,6 +65,30 @@ const SurgeryDetails = () => {
     setIsAIAssistantOpen(false);
   };
 
+  const handleDownloadReport = (attempt) => {
+    const input = document.getElementById(`pdf-report-${attempt.id}`);
+    html2canvas(input, { scale: 2 })
+      .then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'p',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        const width = pdfWidth;
+        const height = width / ratio;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, width, height > pdfHeight ? pdfHeight : height);
+        pdf.save(`surgery-attempt-${attempt.id}.pdf`);
+      });
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -84,47 +110,47 @@ const SurgeryDetails = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
       <Navbar />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-          <Typography variant="h4" component="h1" sx={{ mb: 2, color: 'primary.main' }}>
+      <Container maxWidth={false} sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Paper elevation={3} sx={{ p: 4, borderRadius: 2, width: '100%', maxWidth: '1200px' }}>
+          <Typography variant="h4" component="h1" sx={{ mb: 2, color: 'primary.main', textAlign: 'center' }}>
             {surgery.title}
           </Typography>
-          <Typography variant="subtitle1" sx={{ mb: 2, color: 'text.secondary' }}>
+          <Typography variant="subtitle1" sx={{ mb: 2, color: 'text.secondary', textAlign: 'center' }}>
             {surgery.category}
           </Typography>
-          <Typography variant="body1" sx={{ mb: 3 }}>
+          <Typography variant="body1" sx={{ mb: 3, textAlign: 'center' }}>
             {surgery.description}
           </Typography>
           
-          <Grid container spacing={3}>
+          <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
             {surgery.defaultMetrics && (
                 <Grid item xs={12} md={6}>
-                    <Typography variant="h6">Default Metrics</Typography>
+                    <Typography variant="h6" align="center">Default Metrics</Typography>
                     <List dense>
                         <ListItem>
-                            <ListItemText primary="Target Time" secondary={`${surgery.defaultMetrics.targetTimeSeconds} seconds`} />
+                            <ListItemText primary="Target Time" secondary={`${surgery.defaultMetrics.targetTimeSeconds} seconds`} sx={{ textAlign: 'center' }} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Max Bleeding Level" secondary={surgery.defaultMetrics.maxBleedingLevel} />
+                            <ListItemText primary="Max Bleeding Level" secondary={surgery.defaultMetrics.maxBleedingLevel} sx={{ textAlign: 'center' }}/>
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Required Suction Power" secondary={surgery.defaultMetrics.requiredSuctionPower} />
+                            <ListItemText primary="Required Suction Power" secondary={surgery.defaultMetrics.requiredSuctionPower} sx={{ textAlign: 'center' }}/>
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Safe Zone" secondary={surgery.defaultMetrics.safeZone} />
+                            <ListItemText primary="Safe Zone" secondary={surgery.defaultMetrics.safeZone} sx={{ textAlign: 'center' }}/>
                         </ListItem>
                     </List>
               </Grid>
             )}
             {surgery.requiredSteps && (
               <Grid item xs={12} md={6}>
-                <Typography variant="h6">Required Steps</Typography>
+                <Typography variant="h6" align="center">Required Steps</Typography>
                 <List dense>
                   {surgery.requiredSteps.map((step, index) => (
                     <ListItem key={index}>
-                      <ListItemText primary={`${index + 1}. ${step}`} />
+                      <ListItemText primary={`${index + 1}. ${step}`} sx={{ textAlign: 'center' }}/>
                     </ListItem>
                   ))}
                 </List>
@@ -135,7 +161,7 @@ const SurgeryDetails = () => {
           <Divider sx={{ my: 3 }} />
 
           <Box>
-            <Typography variant="h5" sx={{ mb: 2 }}>Your Attempts</Typography>
+            <Typography variant="h5" sx={{ mb: 2, textAlign: 'center' }}>Your Attempts</Typography>
             {user ? (
               attempts.length > 0 ? (
                 <Box>
@@ -149,8 +175,43 @@ const SurgeryDetails = () => {
                             <Button variant="outlined" size="small" onClick={(e) => {e.stopPropagation(); handleOpenAIAssistant(attempt);}} sx={{ ml: 2 }}>
                                 Discuss with AI
                             </Button>
+                            <Button variant="outlined" size="small" onClick={(e) => {e.stopPropagation(); handleDownloadReport(attempt);}} sx={{ ml: 2 }}>
+                                Download Report
+                            </Button>
                         </AccordionSummary>
                         <AccordionDetails>
+                            <div id={`pdf-report-${attempt.id}`} style={{ position: 'absolute', top: 0, left: 0, zIndex: -1, opacity: 0, pointerEvents: 'none', background: '#fff', color: '#000', width: '210mm', minHeight: '297mm', padding: 20 }}>
+                                <h1 style={{ color: '#3f51b5', borderBottom: '2px solid #3f51b5', paddingBottom: 10 }}>Surgery Report: {surgery.title}</h1>
+                                <h2 style={{ color: '#555' }}>Attempt on {new Date(attempt.timestamp.seconds * 1000).toLocaleString()}</h2>
+                                
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, margin: '20px 0' }}>
+                                    <div>
+                                        <p><strong>Score:</strong> {attempt.score}</p>
+                                        <p><strong>Completion Time:</strong> {attempt.completionTimeSeconds ? attempt.completionTimeSeconds.toFixed(2) : 'N/A'}s</p>
+                                    </div>
+                                    <div>
+                                        <p><strong>Successful:</strong> {attempt.isSuccessful ? 'Yes' : 'No'}</p>
+                                        <p><strong>Bleeding Events:</strong> {attempt.bleedingEventsCount || 0}</p>
+                                    </div>
+                                </div>
+
+                                <h3>Evaluation:</h3>
+                                <p>{attempt.evaluation || "No specific evaluation feedback was provided for this attempt."}</p>
+
+                                <h3 style={{ marginTop: 20, borderTop: '1px solid #ccc', paddingTop: 10 }}>Detailed Logs</h3>
+                                <div style={{ height: 'auto', maxHeight: '150mm', overflowY: 'auto', border: '1px solid #eee', padding: 10, borderRadius: 5, background: '#f9f9f9' }}>
+                                    {attempt.logs && attempt.logs.length > 0 ? (
+                                        attempt.logs.map((log, logIndex) => (
+                                            <p key={logIndex} style={{ margin: 0, padding: 2, fontSize: '10px' }}>{log}</p>
+                                        ))
+                                    ) : (
+                                        <p>No logs available for this attempt.</p>
+                                    )}
+                                </div>
+                                <div style={{ position: 'absolute', bottom: 10, fontSize: '10px', color: '#777', width: '100%' }}>
+                                    Report generated on {new Date().toLocaleDateString()}
+                                </div>
+                            </div>
                             <Typography variant="h6" sx={{ mb: 1 }}>Attempt Logs</Typography>
                             <List dense>
                                 {attempt.logs && attempt.logs.length > 0 ? (
@@ -183,7 +244,9 @@ const SurgeryDetails = () => {
         aria-describedby="ai-assistant-modal-description"
         sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
       >
+        <Box>
           {selectedAttempt && <AIAssistant attempt={selectedAttempt} onClose={handleCloseAIAssistant} />}
+        </Box>
       </Modal>
     </Box>
   );

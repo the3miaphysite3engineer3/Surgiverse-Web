@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../hooks/useAuth';
 import Navbar from '../components/Navbar';
-import { Box, Typography, Paper, CircularProgress, Grid } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Grid, TextField, Button, Switch, FormControlLabel, Slider, Container } from '@mui/material';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -11,6 +11,8 @@ const Profile = () => {
   const [userSettings, setUserSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({});
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -21,7 +23,6 @@ const Profile = () => {
 
       try {
         setLoading(true);
-        // Fetch user data from 'users' collection
         const userDocRef = doc(db, 'users', user.uid);
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
@@ -30,13 +31,19 @@ const Profile = () => {
           console.log("No such user document!");
         }
 
-        // Fetch user settings from 'userSettings' collection by UID field
         const settingsQuery = query(collection(db, 'userSettings'), where('uid', '==', user.uid));
         const settingsSnapshot = await getDocs(settingsQuery);
         
         if (!settingsSnapshot.empty) {
-            // Assuming one settings document per user
-            setUserSettings(settingsSnapshot.docs[0].data());
+            const settingsData = settingsSnapshot.docs[0].data();
+            setUserSettings({
+              ...settingsData,
+              id: settingsSnapshot.docs[0].id
+            });
+            setFormData({
+              ...settingsData,
+              AntiAliasing: settingsData.AntiAliasing === 'True'
+            });
         } else {
             console.log("No userSettings document found for this user!");
         }
@@ -52,6 +59,40 @@ const Profile = () => {
     fetchProfileData();
   }, [user]);
 
+  const handleInputChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleSliderChange = (name, value) => {
+    setFormData(prev => ({...prev, [name]: value}));
+  }
+
+  const handleFormSubmit = async (event) => {
+    event.preventDefault();
+    if (!userSettings?.id) {
+        setError("Cannot update settings: user settings ID not found.");
+        return;
+    }
+
+    try {
+        const settingsDocRef = doc(db, 'userSettings', userSettings.id);
+        const updatedData = {
+          ...formData,
+          AntiAliasing: formData.AntiAliasing ? 'True' : 'False',
+          MasterVolume: formData.MasterVolume.toString(),
+          SFXMusicVolume: formData.SFXMusicVolume.toString(),
+          AmbientMusicVolume: formData.AmbientMusicVolume.toString(),
+        }
+        await updateDoc(settingsDocRef, updatedData);
+        setUserSettings(prev => ({...prev, ...formData, AntiAliasing: formData.AntiAliasing ? 'True' : 'False' }));
+        setIsEditing(false);
+    } catch (err) {
+        setError("Failed to update settings.");
+        console.error(err);
+    }
+  }
+
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
   }
@@ -61,9 +102,9 @@ const Profile = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh' }}>
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
       <Navbar />
-      <Box sx={{ p: 4 }}>
+      <Container maxWidth={false} sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
           Your Profile
         </Typography>
@@ -71,8 +112,8 @@ const Profile = () => {
         {!user ? (
           <Typography>Please log in to view your profile.</Typography>
         ) : (
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
+          <Grid container spacing={4} sx={{ justifyContent: 'center' }}>
+            <Grid item xs={12} md={8} lg={6}>
               <Paper elevation={3} sx={{ p: 4, height: '100%' }}>
                 <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
                   Account Information
@@ -102,12 +143,78 @@ const Profile = () => {
               </Paper>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={8} lg={6}>
               <Paper elevation={3} sx={{ p: 4, height: '100%' }}>
                 <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
                   In-Game Settings
                 </Typography>
                 {userSettings ? (
+                  isEditing ? (
+                    <form onSubmit={handleFormSubmit}>
+                        <TextField
+                            label="Display Name"
+                            name="Name"
+                            value={formData.Name || ''}
+                            onChange={handleInputChange}
+                            fullWidth
+                            sx={{ mb: 2 }}
+                        />
+                        <TextField
+                            label="Age"
+                            name="Age"
+                            type="number"
+                            value={formData.Age || ''}
+                            onChange={handleInputChange}
+                            fullWidth
+                            sx={{ mb: 2 }}
+                        />
+                        <TextField
+                            label="Graphics Level"
+                            name="GraphicsLevel"
+                            type="number"
+                            value={formData.GraphicsLevel || ''}
+                            onChange={handleInputChange}
+                            fullWidth
+                            sx={{ mb: 2 }}
+                        />
+                        <FormControlLabel
+                            control={<Switch checked={formData.AntiAliasing || false} onChange={handleInputChange} name="AntiAliasing" />}
+                            label="Anti-Aliasing"
+                            sx={{ mb: 2 }}
+                        />
+                        <Typography gutterBottom>Master Volume</Typography>
+                        <Slider
+                          value={parseFloat(formData.MasterVolume) || 0}
+                          onChange={(e, value) => handleSliderChange('MasterVolume', value)}
+                          step={0.1}
+                          min={0}
+                          max={1}
+                          valueLabelDisplay="auto"
+                        />
+                        <Typography gutterBottom>SFX Volume</Typography>
+                        <Slider
+                          value={parseFloat(formData.SFXMusicVolume) || 0}
+                          onChange={(e, value) => handleSliderChange('SFXMusicVolume', value)}
+                          step={0.1}
+                          min={0}
+                          max={1}
+                          valueLabelDisplay="auto"
+                        />
+                        <Typography gutterBottom>Music Volume</Typography>
+                        <Slider
+                          value={parseFloat(formData.AmbientMusicVolume) || 0}
+                          onChange={(e, value) => handleSliderChange('AmbientMusicVolume', value)}
+                          step={0.1}
+                          min={0}
+                          max={1}
+                          valueLabelDisplay="auto"
+                        />
+                        <Box sx={{ mt: 3 }}>
+                            <Button type="submit" variant="contained">Save Changes</Button>
+                            <Button onClick={() => setIsEditing(false)} sx={{ ml: 2 }}>Cancel</Button>
+                        </Box>
+                    </form>
+                  ) : (
                   <Box>
                     <Typography><strong>Age:</strong> {userSettings.Age || 'N/A'}</Typography>
                     <Typography><strong>Display Name:</strong> {userSettings.Name || 'N/A'}</Typography>
@@ -116,7 +223,9 @@ const Profile = () => {
                     <Typography sx={{ mt: 2 }}><strong>Master Volume:</strong> {userSettings.MasterVolume ? parseFloat(userSettings.MasterVolume).toFixed(2) : 'N/A'}</Typography>
                     <Typography><strong>SFX Volume:</strong> {userSettings.SFXMusicVolume ? parseFloat(userSettings.SFXMusicVolume).toFixed(2) : 'N/A'}</Typography>
                     <Typography><strong>Music Volume:</strong> {userSettings.AmbientMusicVolume ? parseFloat(userSettings.AmbientMusicVolume).toFixed(2) : 'N/A'}</Typography>
+                    <Button onClick={() => setIsEditing(true)} variant="outlined" sx={{ mt: 3 }}>Edit Settings</Button>
                   </Box>
+                  )
                 ) : (
                   <Typography>No user settings found.</Typography>
                 )}
@@ -124,7 +233,7 @@ const Profile = () => {
             </Grid>
           </Grid>
         )}
-      </Box>
+      </Container>
     </Box>
   );
 };

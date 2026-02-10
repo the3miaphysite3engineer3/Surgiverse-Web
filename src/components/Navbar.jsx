@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, Container } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAuth } from '../hooks/useAuth';
@@ -25,28 +25,33 @@ const Navbar = ({ showBackButton = false }) => {
 
   return (
     <AppBar position="static" sx={{ backgroundColor: 'primary.main' }}>
-      <Toolbar>
-        {showBackButton && (
-          <IconButton edge="start" color="inherit" aria-label="back" onClick={handleBack} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-        )}
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-            SurgiVerse
-          </Link>
-        </Typography>
-        {user && (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Button color="inherit" component={Link} to="/profile">
-              Profile
-            </Button>
-            <Button color="inherit" onClick={handleLogout}>
-              Logout
-            </Button>
-          </Box>
-        )}
-      </Toolbar>
+        <Container maxWidth={false}>
+            <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {showBackButton && (
+                    <IconButton edge="start" color="inherit" aria-label="back" onClick={handleBack} sx={{ mr: 2 }}>
+                        <ArrowBackIcon />
+                    </IconButton>
+                    )}
+                    <Typography variant="h6" component="div">
+                        <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            SurgiVerse
+                        </Link>
+                    </Typography>
+                </Box>
+        
+                {user && (
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Button color="inherit" component={Link} to="/profile">
+                    Profile
+                    </Button>
+                    <Button color="inherit" onClick={handleLogout}>
+                    Logout
+                    </Button>
+                </Box>
+                )}
+            </Toolbar>
+        </Container>
     </AppBar>
   );
 };
