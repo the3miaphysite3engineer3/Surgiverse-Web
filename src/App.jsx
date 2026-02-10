@@ -5,8 +5,15 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Dashboard from './pages/Dashboard';
 import Auth from './pages/Auth';
 import ProtectedRoute from './components/ProtectedRoute';
+import ProfessorRoute from './components/ProfessorRoute';
+import TaProfessorRoute from './components/TaProfessorRoute';
 import SurgeryDetails from './pages/SurgeryDetails';
-import Profile from './pages/Profile'; // Import the Profile component
+import Profile from './pages/Profile';
+import AddSurgery from './pages/AddSurgery';
+import GradeStudents from './pages/GradeStudents';
+import AddResources from './pages/AddResources';
+import Analytics from './pages/Analytics';
+import ManageUsers from './pages/ManageUsers';
 import './styles.css';
 
 const theme = createTheme({
@@ -56,12 +63,52 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route // Add the new Profile route
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-surgery"
+            element={
+              <ProfessorRoute>
+                <AddSurgery />
+              </ProfessorRoute>
+            }
+          />
+          <Route
+            path="/grade-students"
+            element={
+              <TaProfessorRoute>
+                <GradeStudents />
+              </TaProfessorRoute>
+            }
+          />
+          <Route
+            path="/add-resources"
+            element={
+              <ProfessorRoute>
+                <AddResources />
+              </ProfessorRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <TaProfessorRoute>
+                <Analytics />
+              </TaProfessorRoute>
+            }
+          />
+          <Route
+            path="/manage-users"
+            element={
+              <ProfessorRoute>
+                <ManageUsers />
+              </ProfessorRoute>
             }
           />
           <Route path="*" element={<Navigate to="/" />} />
