@@ -1,3 +1,6 @@
 {
+  "firebase_hosting": {
+    "deploymentHostingUrl": "https://surgiverse-279e5.web.app"
+  },
   "gemini_api": {}
 }
