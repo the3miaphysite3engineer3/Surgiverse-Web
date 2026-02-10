@@ -1,48 +1,66 @@
 import React, { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import Navbar from '../components/Navbar';
-import { Box, Typography, TextField, Button, Container, Paper } from '@mui/material';
+import { Box, Typography, TextField, Button, Container, Paper, IconButton } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 
 const AddSurgery = () => {
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState('Grommet insertion (myringotomy)');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
-  const [targetTime, setTargetTime] = useState('');
-  const [maxBleeding, setMaxBleeding] = useState('');
-  const [suctionPower, setSuctionPower] = useState('');
-  const [safeZone, setSafeZone] = useState('');
+  const [sceneName, setSceneName] = useState('MainScene');
+  const [viewSceneName, setViewSceneName] = useState('EarNavigation');
+  const [defaultMetrics, setDefaultMetrics] = useState([{ key: '', value: '' }]);
   const [steps, setSteps] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  const handleMetricChange = (index, event) => {
+    const values = [...defaultMetrics];
+    values[index][event.target.name] = event.target.value;
+    setDefaultMetrics(values);
+  };
+
+  const handleAddMetricField = () => {
+    setDefaultMetrics([...defaultMetrics, { key: '', value: '' }]);
+  };
+
+  const handleRemoveMetricField = (index) => {
+    const values = [...defaultMetrics];
+    values.splice(index, 1);
+    setDefaultMetrics(values);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(false);
 
+    const metricsObject = defaultMetrics.reduce((acc, metric) => {
+      if (metric.key) {
+        const parsedValue = parseFloat(metric.value);
+        acc[metric.key] = isNaN(parsedValue) ? metric.value : parsedValue;
+      }
+      return acc;
+    }, {});
+
     try {
-      await addDoc(collection(db, 'surgeries'), {
+      const newSurgeryRef = doc(collection(db, 'surgeries'));
+      const newId = newSurgeryRef.id;
+
+      await setDoc(newSurgeryRef, {
+        id: newId,
         title,
         category,
         description,
-        defaultMetrics: {
-          targetTimeSeconds: parseInt(targetTime, 10),
-          maxBleedingLevel: parseInt(maxBleeding, 10),
-          requiredSuctionPower: parseInt(suctionPower, 10),
-          safeZone,
-        },
+        sceneName,
+        viewSceneName,
+        defaultMetrics: metricsObject,
         requiredSteps: steps.split('\n').map(step => step.trim()),
       });
       setSuccess(true);
-      setTitle('');
-      setCategory('');
-      setDescription('');
-      setTargetTime('');
-      setMaxBleeding('');
-      setSuctionPower('');
-      setSafeZone('');
-      setSteps('');
     } catch (err) {
       setError('Failed to add surgery. Please try again.');
       console.error(err);
@@ -86,42 +104,54 @@ const AddSurgery = () => {
               rows={4}
               sx={{ mb: 2 }}
             />
-            <Typography variant="h6" sx={{ mt: 2 }}>Default Metrics</Typography>
             <TextField
-              label="Target Time (seconds)"
-              type="number"
-              value={targetTime}
-              onChange={(e) => setTargetTime(e.target.value)}
+              label="Surgery Simulation Scene Name"
+              value={sceneName}
+              onChange={(e) => setSceneName(e.target.value)}
               fullWidth
               required
               sx={{ mb: 2 }}
             />
             <TextField
-              label="Max Bleeding Level"
-              type="number"
-              value={maxBleeding}
-              onChange={(e) => setMaxBleeding(e.target.value)}
+              label="Organ Viewing Scene Name"
+              value={viewSceneName}
+              onChange={(e) => setViewSceneName(e.target.value)}
               fullWidth
               required
               sx={{ mb: 2 }}
             />
-            <TextField
-              label="Required Suction Power"
-              type="number"
-              value={suctionPower}
-              onChange={(e) => setSuctionPower(e.target.value)}
-              fullWidth
-              required
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              label="Safe Zone"
-              value={safeZone}
-              onChange={(e) => setSafeZone(e.target.value)}
-              fullWidth
-              required
-              sx={{ mb: 2 }}
-            />
+            
+            <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Default Metrics</Typography>
+            {defaultMetrics.map((metric, index) => (
+              <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+                <TextField
+                  name="key"
+                  label="Metric Name"
+                  value={metric.key}
+                  onChange={(event) => handleMetricChange(index, event)}
+                  sx={{ flex: 1 }}
+                />
+                <TextField
+                  name="value"
+                  label="Metric Value"
+                  value={metric.value}
+                  onChange={(event) => handleMetricChange(index, event)}
+                  sx={{ flex: 1 }}
+                />
+                <IconButton onClick={() => handleRemoveMetricField(index)} disabled={defaultMetrics.length === 1 && index === 0}>
+                  <RemoveIcon />
+                </IconButton>
+              </Box>
+            ))}
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={handleAddMetricField}
+              sx={{mb: 2}}
+            >
+              Add Metric
+            </Button>
+
             <Typography variant="h6" sx={{ mt: 2 }}>Required Steps</Typography>
             <TextField
               label="Steps (one per line)"

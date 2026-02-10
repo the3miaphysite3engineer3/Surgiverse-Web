@@ -1,15 +1,35 @@
-# Genkit App Blueprint
-
-This document outlines the plan for creating a simple web application that uses Genkit to generate content.
+# SurgiVerse Application Blueprint
 
 ## Overview
 
-The application will have a simple front-end that allows users to input a topic. The front-end will send a request to a Genkit flow, which will use a generative model to create content based on the topic. The generated content will then be displayed on the front-end.
+SurgiVerse is a web-based platform designed for surgical education and training. It provides a virtual environment where students can practice surgical procedures, and professors can create, manage, and evaluate surgical simulations. The platform also includes features for user management, analytics, and AI-powered feedback.
 
-## Plan
+## Implemented Features
 
-1.  **Install Dependencies:** Install the necessary dependencies for Genkit and Firebase Functions.
-2.  **Create Genkit Flow:** Create a simple "hello world" Genkit flow.
-3.  **Update Front-end:** Update the front-end to interact with the Genkit flow.
-4.  **Configure Proxy:** Configure a proxy to forward requests from the front-end to the Genkit flow.
-5.  **Update `package.json`:** Add a `dev` script to run the Genkit flow concurrently with the Vite dev server.
+### User Roles and Permissions
+
+*   **Student:** Can view and practice surgeries, review their attempts, and receive AI-assisted feedback.
+*   **TA (Teaching Assistant):** Can grade student attempts and view analytics.
+*   **Professor:** Has full access to the platform, including adding new surgeries, managing resources, grading students, viewing analytics, and managing user roles.
+
+### Core Functionality
+
+*   **Authentication:** Users can sign up and log in using Firebase Authentication.
+*   **Dashboard:** Displays a list of available surgeries.
+*   **Surgery Details:** Provides detailed information about each surgery, including default metrics and required steps.
+*   **Add Surgery:** Professors can add new surgeries with detailed parameters, including `sceneName` and `viewSceneName` for Unity integration.
+*   **Grade Students:** Professors and TAs can grade student attempts.
+*   **Add Resources:** Professors can add educational resources.
+*   **Analytics:** Professors and TAs can view performance analytics.
+*   **Manage Users:** Professors can manage user roles.
+*   **AI Assistant:** Provides AI-powered feedback on student attempts.
+*   **Profile Page:** Users can view and update their profile information.
+*   **Dynamic Navbar:** The navigation bar dynamically adjusts its content based on the user's role.
+
+## Current Task: Add `sceneName` and `viewSceneName`
+
+### Plan
+
+1.  **Update `AddSurgery.jsx`:** Add new input fields for `sceneName` and `viewSceneName` to the "Add Surgery" form.
+2.  **Update `SurgeryDetails.jsx`:** Display the `sceneName` and `viewSceneName` on the "Surgery Details" page.
+3.  **Update `blueprint.md`:** Document the new fields and the updated functionality.

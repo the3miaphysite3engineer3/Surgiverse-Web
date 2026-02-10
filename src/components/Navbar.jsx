@@ -75,6 +75,9 @@ const Navbar = ({ showBackButton = false }) => {
                   <Button color="inherit" component={Link} to="/manage-users">
                     Manage Users
                   </Button>
+                  <Button color="inherit" component={Link} to="/game-settings">
+                    Game Settings
+                  </Button>
                 </>
               )}
               {userRole === 'TA' && (

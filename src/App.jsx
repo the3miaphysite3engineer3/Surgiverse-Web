@@ -14,6 +14,7 @@ import GradeStudents from './pages/GradeStudents';
 import AddResources from './pages/AddResources';
 import Analytics from './pages/Analytics';
 import ManageUsers from './pages/ManageUsers';
+import GameSettings from './pages/GameSettings';
 import './styles.css';
 
 const theme = createTheme({
@@ -108,6 +109,14 @@ function App() {
             element={
               <ProfessorRoute>
                 <ManageUsers />
+              </ProfessorRoute>
+            }
+          />
+          <Route
+            path="/game-settings"
+            element={
+              <ProfessorRoute>
+                <GameSettings />
               </ProfessorRoute>
             }
           />

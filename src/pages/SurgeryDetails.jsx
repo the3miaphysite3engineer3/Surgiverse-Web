@@ -123,27 +123,28 @@ const SurgeryDetails = () => {
           <Typography variant="body1" sx={{ mb: 3, textAlign: 'center' }}>
             {surgery.description}
           </Typography>
+
+          <Typography variant="body1" sx={{ mb: 3, textAlign: 'center' }}>
+            <b>Surgery Simulation Scene Name:</b> {surgery.sceneName}
+          </Typography>
+
+          <Typography variant="body1" sx={{ mb: 3, textAlign: 'center' }}>
+            <b>Organ Viewing Scene Name:</b> {surgery.viewSceneName}
+          </Typography>
           
           <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
-            {surgery.defaultMetrics && (
-                <Grid item xs={12} md={6}>
-                    <Typography variant="h6" align="center">Default Metrics</Typography>
-                    <List dense>
-                        <ListItem>
-                            <ListItemText primary="Target Time" secondary={`${surgery.defaultMetrics.targetTimeSeconds} seconds`} sx={{ textAlign: 'center' }} />
-                        </ListItem>
-                        <ListItem>
-                            <ListItemText primary="Max Bleeding Level" secondary={surgery.defaultMetrics.maxBleedingLevel} sx={{ textAlign: 'center' }}/>
-                        </ListItem>
-                        <ListItem>
-                            <ListItemText primary="Required Suction Power" secondary={surgery.defaultMetrics.requiredSuctionPower} sx={{ textAlign: 'center' }}/>
-                        </ListItem>
-                        <ListItem>
-                            <ListItemText primary="Safe Zone" secondary={surgery.defaultMetrics.safeZone} sx={{ textAlign: 'center' }}/>
-                        </ListItem>
-                    </List>
-              </Grid>
-            )}
+          {surgery.defaultMetrics && (
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" align="center">Default Metrics</Typography>
+              <List dense>
+                {Object.entries(surgery.defaultMetrics).map(([key, value]) => (
+                  <ListItem key={key}>
+                    <ListItemText primary={key} secondary={value} sx={{ textAlign: 'center' }} />
+                  </ListItem>
+                ))}
+              </List>
+            </Grid>
+          )}
             {surgery.requiredSteps && (
               <Grid item xs={12} md={6}>
                 <Typography variant="h6" align="center">Required Steps</Typography>
