@@ -31,7 +31,7 @@ const Profile = () => {
           console.log("No such user document!");
         }
 
-        const settingsQuery = query(collection(db, 'userSettings'), where('uid', '==', user.uid));
+        const settingsQuery = query(collection(db, 'config'), where('uid', '==', user.uid));
         const settingsSnapshot = await getDocs(settingsQuery);
         
         if (!settingsSnapshot.empty) {
@@ -76,7 +76,7 @@ const Profile = () => {
     }
 
     try {
-        const settingsDocRef = doc(db, 'userSettings', userSettings.id);
+        const settingsDocRef = doc(db, 'config', userSettings.id);
         const updatedData = {
           ...formData,
           AntiAliasing: formData.AntiAliasing ? 'True' : 'False',
