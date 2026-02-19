@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, IconButton, Container } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, Container, Drawer, List, ListItem, useMediaQuery } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
+import MenuIcon from '@mui/icons-material/Menu';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAuth } from '../hooks/useAuth';
 import { auth, db } from '../firebase';
@@ -11,6 +12,8 @@ const Navbar = ({ showBackButton = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const isMobile = useMediaQuery(theme => theme.breakpoints.down('md'));
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -22,21 +25,68 @@ const Navbar = ({ showBackButton = false }) => {
         }
       }
     };
-
     fetchUserRole();
   }, [user]);
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate('/auth'); // Redirect to login page after logout
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    await signOut(auth);
+    navigate('/');
   };
 
-  const handleBack = () => {
-    navigate(-1); // Go back to the previous page
+  const handleDrawerToggle = () => {
+    setDrawerOpen(!drawerOpen);
+  };
+
+  const handleBack = () => navigate(-1);
+
+  const getNavLinks = (isDrawer) => {
+    const linkStyle = {
+      textDecoration: 'none',
+      color: 'inherit',
+      display: 'block',
+      width: '100%',
+      padding: isDrawer ? '10px 20px' : '0'
+    };
+
+    const professorLinks = [
+        { to: "/add-surgery", text: "Add Surgery" },
+        { to: "/grade-students", text: "Grade Students" },
+        { to: "/add-resources", text: "Add Resources" },
+        { to: "/analytics", text: "Analytics" },
+        { to: "/manage-users", text: "Manage Users" },
+        { to: "/game-settings", text: "Game Settings" },
+    ];
+
+    const taLinks = [
+      { to: "/grade-students", text: "Grade Students" },
+      { to: "/analytics", text: "Analytics" },
+    ];
+
+    const commonLinks = [
+      { to: "/profile", text: "Profile" }
+    ];
+
+    let links = [];
+    if (userRole === 'professor') {
+      links = [...links, ...professorLinks];
+    }
+    if (userRole === 'TA') {
+      links = [...links, ...taLinks];
+    }
+    links = [...links, ...commonLinks];
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center' }}>
+        {links.map((link) => (
+          <Button color="inherit" component={Link} to={link.to} sx={linkStyle}>
+            {link.text}
+          </Button>
+        ))}
+        <Button color="inherit" onClick={handleLogout} sx={linkStyle}>
+          Logout
+        </Button>
+      </Box>
+    );
   };
 
   return (
@@ -44,62 +94,30 @@ const Navbar = ({ showBackButton = false }) => {
       <Container maxWidth={false}>
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {showBackButton && (
-              <IconButton edge="start" color="inherit" aria-label="back" onClick={handleBack} sx={{ mr: 2 }}>
-                <ArrowBackIcon />
-              </IconButton>
-            )}
-            <Typography variant="h6" component="div">
-              <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                SurgiVerse
-              </Link>
+            {showBackButton && <IconButton edge="start" color="inherit" onClick={handleBack} sx={{ mr: 2 }}><ArrowBackIcon /></IconButton>}
+            <Typography variant="h6" component={Link} to="/dashboard" sx={{ textDecoration: 'none', color: 'inherit' }}>
+              SurgiVerse
             </Typography>
           </Box>
 
           {user && (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              {userRole === 'professor' && (
-                <>
-                  <Button color="inherit" component={Link} to="/add-surgery">
-                    Add Surgery
-                  </Button>
-                  <Button color="inherit" component={Link} to="/grade-students">
-                    Grade Students
-                  </Button>
-                  <Button color="inherit" component={Link} to="/add-resources">
-                    Add Resources
-                  </Button>
-                  <Button color="inherit" component={Link} to="/analytics">
-                    Analytics
-                  </Button>
-                  <Button color="inherit" component={Link} to="/manage-users">
-                    Manage Users
-                  </Button>
-                  <Button color="inherit" component={Link} to="/game-settings">
-                    Game Settings
-                  </Button>
-                </>
-              )}
-              {userRole === 'TA' && (
-                <>
-                  <Button color="inherit" component={Link} to="/grade-students">
-                    Grade Students
-                  </Button>
-                  <Button color="inherit" component={Link} to="/analytics">
-                    Analytics
-                  </Button>
-                </>
-              )}
-              <Button color="inherit" component={Link} to="/profile">
-                Profile
-              </Button>
-              <Button color="inherit" onClick={handleLogout}>
-                Logout
-              </Button>
-            </Box>
+            isMobile ? (
+              <IconButton color="inherit" edge="end" onClick={handleDrawerToggle}>
+                <MenuIcon />
+              </IconButton>
+            ) : (
+              getNavLinks(false)
+            )
           )}
         </Toolbar>
       </Container>
+      <Drawer anchor="right" open={drawerOpen} onClose={handleDrawerToggle}>
+        <Box sx={{ width: 250, p: 2 }}>
+          <List>
+            {getNavLinks(true)}
+          </List>
+        </Box>
+      </Drawer>
     </AppBar>
   );
 };

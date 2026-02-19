@@ -1,0 +1,32 @@
+/* Profile Page Specific Styles */
+
+/* Center the main content */
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+}
+
+/* Style for the paper component */
+.profile-paper {
+  padding: 2rem;
+  width: 100%;
+  max-width: 800px; /* Limit max width for larger screens */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 1rem;
+  }
+
+  .profile-paper {
+    padding: 1.5rem;
+  }
+
+  /* Stack the grid items on mobile */
+  .profile-grid-container {
+    flex-direction: column;
+  }
+}

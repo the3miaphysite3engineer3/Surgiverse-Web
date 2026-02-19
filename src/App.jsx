@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Dashboard from './pages/Dashboard';
-import Auth from './pages/Auth';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfessorRoute from './components/ProfessorRoute';
 import TaProfessorRoute from './components/TaProfessorRoute';
@@ -15,6 +14,7 @@ import AddResources from './pages/AddResources';
 import Analytics from './pages/Analytics';
 import ManageUsers from './pages/ManageUsers';
 import GameSettings from './pages/GameSettings';
+import Landing from './pages/Landing';
 import './styles.css';
 
 const theme = createTheme({
@@ -47,9 +47,9 @@ function App() {
       <CssBaseline />
       <Router>
         <Routes>
-          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={<Landing />} />
           <Route
-            path="/"
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <Dashboard />

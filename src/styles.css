@@ -1,7 +1,7 @@
 /* General Body Styles */
 body {
-  background-color: #f0f2f5; /* Light grey background */
-  color: #333; /* Dark grey text */
+  background-color: #f0f2f5;
+  color: #333;
   font-family: 'Roboto', sans-serif;
 }
 
@@ -18,7 +18,7 @@ body {
 .navbar-brand {
   font-weight: bold;
   font-size: 1.5rem;
-  color: #3f51b5; /* Primary color */
+  color: #3f51b5;
 }
 
 .navbar-links a {
@@ -33,12 +33,12 @@ body {
   color: #3f51b5;
 }
 
-/* Dashboard Styles */
-.dashboard-container {
-  padding: 2rem;
+/* Dashboard & Other Pages */
+.dashboard-container, .page-container {
+  padding: 1.5rem;
 }
 
-.dashboard-title {
+.dashboard-title, .page-title {
   text-align: center;
   margin-bottom: 2rem;
   color: #3f51b5;
@@ -51,87 +51,89 @@ body {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
   margin-bottom: 2rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.surgery-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-.surgery-card-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #3f51b5;
-  margin-bottom: 0.5rem;
-}
-
-.surgery-card-category {
-  font-size: 1rem;
-  color: #666;
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Make cards in the same row equal height */
 }
 
 .surgery-card-description {
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.surgery-card-details {
-  margin-bottom: 1.5rem;
-}
-
-.surgery-card-details p {
-  margin: 0.5rem 0;
-}
-
-.launch-button {
-  background-color: #4caf50; /* Green */
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
-}
-
-.launch-button:hover {
-  background-color: #45a049;
-}
-
-/* Attempts Section */
-.attempts-section {
-  margin-top: 1.5rem;
-  border-top: 1px solid #eee;
-  padding-top: 1.5rem;
-}
-
-.attempts-title {
-  font-size: 1.25rem;
-  font-weight: bold;
+  flex-grow: 1; /* Allow description to take up available space */
   margin-bottom: 1rem;
+}
+
+.attempts-section {
+  margin-top: 1rem;
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
 }
 
 .attempt-item {
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #f9f9f9;
 }
 
 .no-attempts {
-  color: #999;
-  font-style: italic;
+  color: #777;
 }
 
-/* VR Mode Toggle */
-.vr-mode-toggle {
-  display: flex;
-  align-items: center;
+/* --- Responsive Styles --- */
+
+/* For Tablets and smaller desktops */
+@media (max-width: 992px) {
+  .navbar {
+    padding: 1rem;
+  }
+  .navbar-links a {
+    margin-left: 1rem;
+  }
 }
 
-.vr-mode-toggle .MuiSwitch-root {
-  margin-left: 0.5rem;
+/* For Mobile Phones */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .navbar-brand {
+    margin-bottom: 1rem;
+  }
+
+  .navbar-links {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .navbar-links a {
+    margin: 0.5rem 0;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .dashboard-container, .page-container {
+    padding: 1rem;
+  }
+
+  .dashboard-title, .page-title {
+    font-size: 1.8rem;
+  }
+
+  .surgery-card {
+    padding: 1rem;
+  }
+
+  .surgery-card-title {
+    font-size: 1.3rem;
+  }
+
+  /* Adjust form inputs and buttons for mobile */
+  input[type='text'],
+  input[type='email'],
+  input[type='password'],
+  textarea,
+  button {
+    font-size: 16px; /* Improves mobile usability */
+  }
 }

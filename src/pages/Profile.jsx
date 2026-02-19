@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { useAuth } from '../hooks/useAuth';
 import Navbar from '../components/Navbar';
 import { Box, Typography, Paper, CircularProgress, Grid, TextField, Button, Switch, FormControlLabel, Slider, Container } from '@mui/material';
+import './Profile.css'; // Import the new CSS file
 
 const Profile = () => {
   const { user } = useAuth();
@@ -104,7 +105,7 @@ const Profile = () => {
   return (
     <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
       <Navbar />
-      <Container maxWidth={false} sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Container maxWidth={false} className="profile-container">
         <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
           Your Profile
         </Typography>
@@ -112,9 +113,9 @@ const Profile = () => {
         {!user ? (
           <Typography>Please log in to view your profile.</Typography>
         ) : (
-          <Grid container spacing={4} sx={{ justifyContent: 'center' }}>
-            <Grid item xs={12} md={8} lg={6}>
-              <Paper elevation={3} sx={{ p: 4, height: '100%' }}>
+          <Grid container spacing={4} className="profile-grid-container">
+            <Grid item xs={12} md={6}>
+              <Paper elevation={3} className="profile-paper">
                 <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
                   Account Information
                 </Typography>
@@ -143,8 +144,8 @@ const Profile = () => {
               </Paper>
             </Grid>
 
-            <Grid item xs={12} md={8} lg={6}>
-              <Paper elevation={3} sx={{ p: 4, height: '100%' }}>
+            <Grid item xs={12} md={6}>
+              <Paper elevation={3} className="profile-paper">
                 <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
                   In-Game Settings
                 </Typography>
