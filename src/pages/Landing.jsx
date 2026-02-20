@@ -49,6 +49,8 @@ const Landing = () => {
     };
 
     useEffect(() => {
+        document.title = 'SurgiVerse - Login & Register';
+        
         // Only run animations on non-mobile devices
         if (window.innerWidth < 769) return;
 
@@ -111,23 +113,20 @@ const Landing = () => {
         function animate() {
             headX += (mouseX - headX) * 0.12;
             headY += (mouseY - headY) * 0.12;
-            // Position the head element. The visual center of the head is at (headX, headY)
-            head.style.transform = `translate(${headX - 47.5}px, ${headY - 16}px)`; // 47.5 = 95/2
-            // Position the light beam to emanate from the optic lens on the head
-            beam.style.transform = `translate(${headX - 47.5}px, ${headY - 250}px)`;
+
+            head.style.transform = `translate(${headX - 47.5}px, ${headY - 16}px)`;
+            beam.style.transform = `translate(${headX - 47.5 + 95}px, ${headY - 250}px)`;
 
             const rect = card.getBoundingClientRect();
             const dist = Math.hypot(headX - (rect.left + rect.width/2), headY - (rect.top + rect.height/2));
             if (dist < 350) card.classList.add('active');
             else card.classList.remove('active');
 
-            // Draw the cable
             c_ctx.clearRect(0, 0, cableCanvas.width, cableCanvas.height);
             c_ctx.beginPath();
             c_ctx.lineWidth = 12;
             c_ctx.strokeStyle = '#2c3e50';
             c_ctx.moveTo(0, cableCanvas.height);
-            // Draw a curve from the bottom of the screen to the back of the endoscope head
             c_ctx.bezierCurveTo(cableCanvas.width / 4, cableCanvas.height, headX - 150, headY + 120, headX - 47.5, headY);
             c_ctx.stroke();
             c_ctx.setLineDash([6, 10]);

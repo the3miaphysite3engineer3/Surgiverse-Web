@@ -112,8 +112,8 @@ const SurgeryDetails = () => {
   return (
     <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
       <Navbar />
-      <Container maxWidth={false} sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 2, width: '100%', maxWidth: '1200px' }}>
+      <Container className="page-container">
+        <Paper elevation={3} className="page-paper">
           <Typography variant="h4" component="h1" sx={{ mb: 2, color: 'primary.main', textAlign: 'center' }}>
             {surgery.title}
           </Typography>

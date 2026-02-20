@@ -40,8 +40,8 @@ const AddResources = () => {
   return (
     <Box>
       <Navbar />
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Paper sx={{ p: 4 }}>
+      <Container className="page-container">
+        <Paper className="page-paper">
           <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
             Add AI Training Resources
           </Typography>

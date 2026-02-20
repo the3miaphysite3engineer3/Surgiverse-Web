@@ -10,9 +10,10 @@ const Dashboard = () => {
   const [surgeriesWithAttempts, setSurgeriesWithAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useAuth(); // Correctly destructure 'user'
+  const { user } = useAuth();
 
   useEffect(() => {
+    document.title = 'SurgiVerse - Dashboard';
     const fetchData = async () => {
       try {
         // Fetch surgeries
@@ -22,9 +23,9 @@ const Dashboard = () => {
 
         // Fetch attempts if user is logged in
         let attemptsList = [];
-        if (user) { // Use 'user' here
+        if (user) {
           const attemptsCollection = collection(db, 'attempts');
-          const q = query(attemptsCollection, where('uid', '==', user.uid)); // And here
+          const q = query(attemptsCollection, where('uid', '==', user.uid));
           const attemptsSnapshot = await getDocs(q);
           attemptsList = attemptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
@@ -45,7 +46,7 @@ const Dashboard = () => {
     };
 
     fetchData();
-  }, [user]); // And in the dependency array
+  }, [user]);
 
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
@@ -58,44 +59,44 @@ const Dashboard = () => {
   return (
     <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
       <Navbar />
-      <Container maxWidth={false} className="dashboard-container">
-        <Typography variant="h4" component="h1" className="dashboard-title">
+      <Container maxWidth={false} sx={{ py: 4, width: '100vw' }}>
+        <Typography variant="h4" component="h1" sx={{ mb: 4, textAlign: 'center' }}>
           SurgiVerse Dashboard
         </Typography>
         <Grid container spacing={4}>
           {surgeriesWithAttempts.map((surgery) => (
             <Grid item xs={12} md={6} key={surgery.id}>
-              <Paper elevation={3} className="surgery-card">
-                <Typography variant="h5" component="h2" className="surgery-card-title">
+              <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Typography variant="h5" component="h2">
                   {surgery.title}
                 </Typography>
-                <Typography variant="subtitle1" className="surgery-card-category">
+                <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2 }}>
                   {surgery.category}
                 </Typography>
-                <Typography variant="body2" className="surgery-card-description">
+                <Typography variant="body2" sx={{ flexGrow: 1, mb: 2 }}>
                   {surgery.description}
                 </Typography>
 
-                <Box className="attempts-section">
-                  <Typography variant="h6" className="attempts-title">Your Attempts</Typography>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="h6">Your Attempts</Typography>
                   {user ? (
                     surgery.attempts.length > 0 ? (
-                      <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
-                        {surgery.attempts.map((attempt, index) => (
-                          <li key={attempt.id} className="attempt-item">
-                            <strong>Attempt #{index + 1}:</strong> Score - {attempt.score}, Time - {attempt.completionTimeSeconds.toFixed(2)}s
+                      <ul style={{ paddingLeft: '20px', listStyle: 'decimal' }}>
+                        {surgery.attempts.map((attempt) => (
+                          <li key={attempt.id}>
+                            Score: {attempt.score}, Time: {attempt.completionTimeSeconds.toFixed(2)}s
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <Typography className="no-attempts">You have not attempted this surgery yet.</Typography>
+                      <Typography>You have not attempted this surgery yet.</Typography>
                     )
                   ) : (
                     <Typography>Please log in to see your attempts.</Typography>
                   )}
                 </Box>
 
-                <Box sx={{ mt: 2, textAlign: 'right' }}>
+                <Box sx={{ mt: 'auto', textAlign: 'right' }}>
                   <Button component={Link} to={`/surgery/${surgery.id}`} variant="contained" color="primary">
                     View Details
                   </Button>

@@ -72,8 +72,8 @@ const Analytics = () => {
   return (
     <Box>
       <Navbar />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Paper sx={{ p: 4 }}>
+      <Container className="page-container">
+        <Paper className="page-paper">
           <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
             Student Analytics
           </Typography>

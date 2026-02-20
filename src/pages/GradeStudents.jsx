@@ -142,10 +142,10 @@ const GradeStudents = () => {
 
 
   return (
-    <Box>
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
       <Navbar />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Paper sx={{ p: 4 }}>
+      <Container className="page-container">
+        <Paper className="page-paper">
           <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
             Grade Students
           </Typography>

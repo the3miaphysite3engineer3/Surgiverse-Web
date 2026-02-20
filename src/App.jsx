@@ -15,7 +15,7 @@ import Analytics from './pages/Analytics';
 import ManageUsers from './pages/ManageUsers';
 import GameSettings from './pages/GameSettings';
 import Landing from './pages/Landing';
-import './styles.css';
+import './App.css';
 
 const theme = createTheme({
   palette: {
