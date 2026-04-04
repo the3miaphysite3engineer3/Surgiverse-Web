@@ -22,7 +22,7 @@ import {
 import { db } from '../firebase';
 
 // --- IMPORTANT ---
-const API_KEY = "AIzaSyBmjhGdLkFH8aiXWnuOsnt4zVeNcSfjJKE";
+const API_KEY = "AIzaSyDhOXRccxrsJeAWcCRoo3HT4Jzu5cxGZeg";
 // -----------------
 
 const AIAssistant = ({ attempt, onClose }) => {
@@ -83,7 +83,7 @@ Use clear markdown formatting.
 
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemma-3-27b-it",
         contents: prompt
       });
 
