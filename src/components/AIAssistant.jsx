@@ -22,7 +22,7 @@ import {
 import { db } from '../firebase';
 
 // --- IMPORTANT ---
-const API_KEY = process.env.API_KEY;
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 // -----------------
 
 const AIAssistant = ({ attempt, onClose }) => {

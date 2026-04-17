@@ -6,14 +6,14 @@ import { getAuth } from "firebase/auth"; // Import getAuth
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyB8BUu79_s4HdkhdyQtW8LbGU2zuQVJIWU",
-  authDomain: "surgiverse-279e5.firebaseapp.com",
-  databaseURL: "https://surgiverse-279e5-default-rtdb.firebaseio.com",
-  projectId: "surgiverse-279e5",
-  storageBucket: "surgiverse-279e5.appspot.com",
-  messagingSenderId: "682276620148",
-  appId: "1:682276620148:web:b9e711262fa6df6ec9ce21",
-  measurementId: "G-5S41NDYPMC"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase services conditionally
