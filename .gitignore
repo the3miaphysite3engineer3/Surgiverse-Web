@@ -24,6 +24,7 @@ dist-ssr
 *.sw?
 
 # env files (.env.example is an exception with dummy placeholder values)
+.env
 .env*
 !.env.example
 

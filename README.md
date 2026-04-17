@@ -62,38 +62,28 @@ Follow these instructions to set up and run the project in your local environmen
     npm install
     ```
 
-3.  **Configure Firebase:**
-    - Create a `firebase.js` file in the `src` directory (`src/firebase.js`).
-    - Go to your Firebase project settings and copy your web app's Firebase configuration object.
-    - Paste the configuration into `src/firebase.js` and export the necessary Firebase services:
-    ```javascript
-    import { initializeApp } from "firebase/app";
-    import { getAuth } from "firebase/auth";
-    import { getFirestore } from "firebase/firestore";
-
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    export { auth, db };
+3.  **Configure environment variables:**
+    - Create a `.env` file in the project root.
+    - Add Firebase and OpenRouter keys using Vite environment variable names.
+    - Your `.env` should look like:
+    ```dotenv
+    VITE_OPENROUTER=YOUR_OPENROUTER_API_KEY
+    VITE_FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY
+    VITE_FIREBASE_AUTH_DOMAIN=YOUR_FIREBASE_AUTH_DOMAIN
+    VITE_FIREBASE_DATABASE_URL=YOUR_FIREBASE_DATABASE_URL
+    VITE_FIREBASE_PROJECT_ID=YOUR_FIREBASE_PROJECT_ID
+    VITE_FIREBASE_STORAGE_BUCKET=YOUR_FIREBASE_STORAGE_BUCKET
+    VITE_FIREBASE_MESSAGING_SENDER_ID=YOUR_FIREBASE_MESSAGING_SENDER_ID
+    VITE_FIREBASE_APP_ID=YOUR_FIREBASE_APP_ID
+    VITE_FIREBASE_MEASUREMENT_ID=YOUR_FIREBASE_MEASUREMENT_ID
     ```
+    - The app loads these values through `import.meta.env.VITE_*` in `src/firebase.js` and the AI assistant.
 
 4.  **Run the development server:**
     ```sh
     npm run dev
     ```
-    The application will be available at `https://surgiverse.web.app`.
+    The application will be available at `http://localhost:5173`.
 
 ## Project Structure
 

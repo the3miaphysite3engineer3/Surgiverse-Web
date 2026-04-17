@@ -9,7 +9,6 @@ import {
   TextField
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { GoogleGenAI } from '@google/genai';
 import ReactMarkdown from 'react-markdown';
 import {
   collection,
@@ -21,17 +20,15 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
-// --- IMPORTANT ---
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-// -----------------
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER;
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
 
 const AIAssistant = ({ attempt, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
-
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
 
   const messagesRef = attempt
     ? collection(db, 'attemptChats', attempt.id, 'messages')
@@ -70,27 +67,80 @@ Use clear markdown formatting.
     sendToAI(initialPrompt);
   }, [attempt, messages]);
 
-  const saveMessage = async (role, content) => {
-    await addDoc(messagesRef, {
+  const saveMessage = async (role, content, reasoning_details = null) => {
+    const messageDoc = {
       role,
       content,
       createdAt: serverTimestamp()
+    };
+
+    if (reasoning_details !== null) {
+      messageDoc.reasoning_details = reasoning_details;
+    }
+
+    await addDoc(messagesRef, messageDoc);
+  };
+
+  const buildOpenRouterMessages = (historyMessages, prompt) => {
+    const apiMessages = historyMessages.map((msg) => {
+      const messageEntry = {
+        role: msg.role,
+        content: msg.content || ''
+      };
+
+      if (msg.role === 'assistant' && msg.reasoning_details) {
+        messageEntry.reasoning_details = msg.reasoning_details;
+      }
+
+      return messageEntry;
     });
+
+    apiMessages.push({
+      role: 'user',
+      content: prompt
+    });
+
+    return apiMessages;
   };
 
   const sendToAI = async (prompt) => {
     setLoading(true);
 
+    if (!OPENROUTER_API_KEY) {
+      console.error('Missing VITE_OPENROUTER API key.');
+      await saveMessage('ai', '⚠️ OpenRouter API key is missing.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await ai.models.generateContent({
-        model: "gemma-3-27b-it",
-        contents: prompt
+      const response = await fetch(OPENROUTER_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: OPENROUTER_MODEL,
+          reasoning: { enabled: true },
+          messages: buildOpenRouterMessages(messages, prompt)
+        })
       });
 
-      await saveMessage('ai', response.text);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.message || `OpenRouter request failed: ${response.status}`);
+      }
+
+      const aiMessage = result?.choices?.[0]?.message;
+      const assistantContent = aiMessage?.content ?? '⚠️ No response from OpenRouter.';
+      const reasoningDetails = aiMessage?.reasoning_details ?? null;
+
+      await saveMessage('ai', assistantContent, reasoningDetails);
     } catch (err) {
-      console.log(err)
-      await saveMessage('ai', '⚠️ Error generating response.');
+      console.error(err);
+      await saveMessage('ai', `⚠️ Error generating response: ${err.message || err}`);
     } finally {
       setLoading(false);
     }
