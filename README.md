@@ -83,7 +83,7 @@ Follow these instructions to set up and run the project in your local environmen
     ```sh
     npm run dev
     ```
-    The application will be available at `http://localhost:5173`.
+    The application will be available at `https://surgiverse-web.vercel.app`.
 
 ## Project Structure
 
