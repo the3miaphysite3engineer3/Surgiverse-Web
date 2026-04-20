@@ -515,10 +515,12 @@ const VisualResources = () => {
     addLiveLog(`Connecting to ${LIVE_MODEL}...`);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+      const ai = new GoogleGenAI({
+        apiKey: GEMINI_API_KEY,
+        httpOptions: { apiVersion: 'v1alpha' },
+      });
       const cfg = {
         responseModalities: [Modality.AUDIO],
-        historyConfig: { initialHistoryInClientContent: true },
       };
       if (systemInstruction.trim()) cfg.systemInstruction = systemInstruction.trim();
 
