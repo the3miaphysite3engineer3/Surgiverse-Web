@@ -52,6 +52,7 @@ const Navbar = ({ showBackButton = false }) => {
         { to: "/add-surgery", text: "Add Surgery" },
         { to: "/grade-students", text: "Grade Students" },
         { to: "/add-resources", text: "Add Resources" },
+        { to: "/visual-resources", text: "Visual Resources" },
         { to: "/analytics", text: "Analytics" },
         { to: "/manage-users", text: "Manage Users" },
         { to: "/game-settings", text: "Game Settings" },

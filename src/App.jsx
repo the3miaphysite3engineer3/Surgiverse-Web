@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import AddSurgery from './pages/AddSurgery';
 import GradeStudents from './pages/GradeStudents';
 import AddResources from './pages/AddResources';
+import VisualResources from './pages/VisualResources';
 import Analytics from './pages/Analytics';
 import ManageUsers from './pages/ManageUsers';
 import GameSettings from './pages/GameSettings';
@@ -93,6 +94,14 @@ function App() {
             element={
               <ProfessorRoute>
                 <AddResources />
+              </ProfessorRoute>
+            }
+          />
+          <Route
+            path="/visual-resources"
+            element={
+              <ProfessorRoute>
+                <VisualResources />
               </ProfessorRoute>
             }
           />
