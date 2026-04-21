@@ -18,6 +18,8 @@ import {
   LinearProgress,
 } from '@mui/material';
 import { GoogleGenAI, Modality } from '@google/genai';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const SEND_SAMPLE_RATE = 16000;
@@ -220,15 +222,22 @@ class VideoFrameExtractor {
       const video = document.createElement('video');
       video.muted = true;
       video.preload = 'auto';
+      video.playsInline = true;
 
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const frames = [];
 
-      video.onloadedmetadata = () => {
+      const handleMetadata = () => {
         const duration = video.duration;
+        if (!duration || isNaN(duration)) {
+          URL.revokeObjectURL(video.src);
+          reject(new Error('Invalid video duration.'));
+          return;
+        }
+
         const interval = 1 / this.fps;
-        const totalPossible = Math.floor(duration / interval);
+        const totalPossible = Math.max(1, Math.floor(duration / interval));
         const totalFrames = Math.min(totalPossible, maxFrames);
 
         const vw = video.videoWidth;
@@ -246,8 +255,9 @@ class VideoFrameExtractor {
             return;
           }
 
+          // Ensure we get the first frame even if duration is short
           const time = frameIndex * interval;
-          video.currentTime = Math.min(time, duration - 0.1);
+          video.currentTime = Math.min(time, Math.max(0, duration - 0.1));
         };
 
         video.onseeked = () => {
@@ -262,12 +272,19 @@ class VideoFrameExtractor {
             });
           }
           frameIndex++;
-          if (onProgress) onProgress(frameIndex, Math.min(totalPossible, maxFrames));
+          if (onProgress) onProgress(frameIndex, totalFrames);
           captureNext();
         };
 
         captureNext();
       };
+
+      video.onloadedmetadata = handleMetadata;
+
+      // Fallback if metadata already loaded or event missed
+      if (video.readyState >= 1) {
+        handleMetadata();
+      }
 
       video.onerror = () => {
         URL.revokeObjectURL(video.src);
@@ -281,6 +298,9 @@ class VideoFrameExtractor {
 
 // ════════════════════════════════════════════════════════════════════
 const VisualResources = () => {
+  const CLOUDINARY_CLOUD = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
   const [referenceFile, setReferenceFile] = useState(null);
   const [comparisonFile, setComparisonFile] = useState(null);
   const [referencePreview, setReferencePreview] = useState('');
@@ -309,6 +329,9 @@ const VisualResources = () => {
   const [videosSentToLive, setVideosSentToLive] = useState(false);
   const [sendingVideos, setSendingVideos] = useState(false);
   const [videoProgress, setVideoProgress] = useState('');
+  const [refSaveTitle, setRefSaveTitle] = useState('');
+  const [cmpSaveTitle, setCmpSaveTitle] = useState('');
+  const [savingRef, setSavingRef] = useState(false);
 
   const sessionRef = useRef(null);
   const pcmRecorderRef = useRef(null);
@@ -347,6 +370,105 @@ const VisualResources = () => {
     if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
     flushTimerRef.current = setTimeout(() => { buildReplayAudio(); flushTimerRef.current = null; }, 1500);
   }, [buildReplayAudio]);
+
+  // Upload a base64 image (no data: prefix) to Cloudinary (unsigned preset)
+  const uploadBase64ToCloudinary = async (base64, publicId, folder = '') => {
+    const cloud = CLOUDINARY_CLOUD?.trim()?.replace(/["']/g, '');
+    const preset = CLOUDINARY_UPLOAD_PRESET?.trim()?.replace(/["']/g, '');
+
+    if (!cloud || !preset) throw new Error('Missing Cloudinary config (cloud name or upload preset)');
+
+    const url = `https://api.cloudinary.com/v1_1/${cloud}/image/upload`;
+
+    const fd = new FormData();
+    fd.append('file', `data:image/jpeg;base64,${base64}`);
+    fd.append('upload_preset', preset);
+    // Ensure public_id is clean
+    const cleanPublicId = publicId.toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+    fd.append('public_id', cleanPublicId);
+
+    // Use folder parameter if provided
+    if (folder) {
+      fd.append('folder', folder.toString().replace(/[^a-zA-Z0-9_-]/g, '_'));
+    }
+
+    // Use filename_override instead of display_name (which is forbidden in unsigned uploads)
+    fd.append('filename_override', cleanPublicId);
+
+    const res = await fetch(url, {
+      method: 'POST',
+      body: fd
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      console.error('Cloudinary Error Detail:', errData);
+      throw new Error(`Upload failed: ${errData.error?.message || res.statusText}`);
+    }
+    return res.json();
+  };
+
+  // Extract frames from a video file, upload to Cloudinary, and create a Firestore doc
+  const saveVideoToRefVideos = async (file, title, { maxFrames = 120 } = {}) => {
+    setStatusMessage(null);
+    if (!file) { setStatusMessage({ severity: 'error', text: 'Select a video first.' }); return; }
+
+    const cloud = CLOUDINARY_CLOUD?.trim()?.replace(/["']/g, '');
+    const preset = CLOUDINARY_UPLOAD_PRESET?.trim()?.replace(/["']/g, '');
+    if (!cloud || !preset) {
+      setStatusMessage({ severity: 'error', text: 'Cloudinary config missing (VITE_CLOUDINARY_CLOUD_NAME / VITE_CLOUDINARY_UPLOAD_PRESET).' });
+      return;
+    }
+
+    setSavingRef(true);
+    setVideoProgress('Extracting frames...');
+    try {
+      const extractor = new VideoFrameExtractor(0.5, 512, 0.6);
+      const frames = await extractor.extractFrames(file, maxFrames, (done, total) => setVideoProgress(`Extracted ${done}/${total}`));
+
+      if (frames.length === 0) {
+        throw new Error('No frames were extracted from the video.');
+      }
+
+      setVideoProgress(`Uploading ${frames.length} frames...`);
+      const uploaded = [];
+      const folderName = title?.trim() || file.name.replace(/\.[^/.]+$/, ""); // Use title or filename without extension
+      let i = 0;
+      for (const f of frames) {
+        i += 1;
+        setVideoProgress(`Uploading ${i}/${frames.length}`);
+        const pubId = `frame_${Date.now()}_${i}`;
+        try {
+          const j = await uploadBase64ToCloudinary(f.data, pubId, folderName);
+          if (j?.secure_url) {
+            uploaded.push(j.secure_url);
+          }
+        } catch (e) {
+          console.warn('Frame upload failed', e);
+        }
+      }
+
+      if (uploaded.length === 0) {
+        throw new Error('Failed to upload any frames to Cloudinary.');
+      }
+
+      // Create Firestore document
+      const doc = {
+        title: title?.trim() || file.name,
+        frames: uploaded,
+        sourceFileName: file.name,
+        createdAt: serverTimestamp(),
+      };
+      await addDoc(collection(db, 'refVideos'), doc);
+      setStatusMessage({ severity: 'success', text: `Successfully saved ${uploaded.length} frames to refVideos collection.` });
+    } catch (err) {
+      console.error(err);
+      setStatusMessage({ severity: 'error', text: err?.message || 'Failed saving frames.' });
+    } finally {
+      setSavingRef(false);
+      setVideoProgress('');
+    }
+  };
 
   // ─── Send video frames to live session via sendClientContent ─────
   const sendVideosToLiveSession = useCallback(async () => {
@@ -749,6 +871,14 @@ const VisualResources = () => {
                 <TextField label="Reference YouTube URL" value={referenceYoutube}
                   onChange={(e) => { setReferenceYoutube(e.target.value); setVideosSentToLive(false); }}
                   fullWidth sx={{ mt: 2 }} placeholder="https://www.youtube.com/watch?v=..." />
+                <TextField label="Save title (for Firestore)" value={refSaveTitle}
+                  onChange={(e) => setRefSaveTitle(e.target.value)} fullWidth sx={{ mt: 2 }} placeholder="Reference title to save" />
+                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                  <Button variant="contained" disabled={!referenceFile || savingRef} onClick={async (e) => { e.preventDefault(); await saveVideoToRefVideos(referenceFile, refSaveTitle); }}>
+                    {savingRef ? <CircularProgress size={20} /> : 'Save Reference Frames'}
+                  </Button>
+                  {videoProgress && <Typography variant="body2" sx={{ alignSelf: 'center' }}>{videoProgress}</Typography>}
+                </Box>
               </Grid>
 
               {/* Comparison */}
@@ -763,6 +893,13 @@ const VisualResources = () => {
                 <TextField label="Comparison YouTube URL" value={comparisonYoutube}
                   onChange={(e) => { setComparisonYoutube(e.target.value); setVideosSentToLive(false); }}
                   fullWidth sx={{ mt: 2 }} placeholder="https://www.youtube.com/watch?v=..." />
+                <TextField label="Save title (for Firestore)" value={cmpSaveTitle}
+                  onChange={(e) => setCmpSaveTitle(e.target.value)} fullWidth sx={{ mt: 2 }} placeholder="Comparison title to save" />
+                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                  <Button variant="contained" color="secondary" disabled={!comparisonFile || savingRef} onClick={async (e) => { e.preventDefault(); await saveVideoToRefVideos(comparisonFile, cmpSaveTitle); }}>
+                    {savingRef ? <CircularProgress size={20} /> : 'Save Comparison Frames'}
+                  </Button>
+                </Box>
               </Grid>
 
               {/* Prompt */}
@@ -845,8 +982,8 @@ const VisualResources = () => {
                       {videosSentToLive
                         ? `🎬 Video frames loaded. Ref: ${referenceFile?.name || referenceYoutube || 'none'} | Cmp: ${comparisonFile?.name || comparisonYoutube || 'none'}`
                         : sendingVideos
-                        ? '⏳ Extracting and sending video frames...'
-                        : '⚠️ No video frames sent yet. Click "Resend Videos" or ensure videos are selected before starting.'}
+                          ? '⏳ Extracting and sending video frames...'
+                          : '⚠️ No video frames sent yet. Click "Resend Videos" or ensure videos are selected before starting.'}
                     </Typography>
                   </Paper>
                 )}

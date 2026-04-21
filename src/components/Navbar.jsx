@@ -79,7 +79,7 @@ const Navbar = ({ showBackButton = false }) => {
     return (
       <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center' }}>
         {links.map((link) => (
-          <Button color="inherit" component={Link} to={link.to} sx={linkStyle}>
+          <Button key={link.to} color="inherit" component={Link} to={link.to} sx={linkStyle}>
             {link.text}
           </Button>
         ))}
