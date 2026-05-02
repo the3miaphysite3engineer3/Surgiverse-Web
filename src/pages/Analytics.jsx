@@ -69,43 +69,43 @@ const Analytics = () => {
   }
 
   const chartData = getChartData();
+  return (
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
+      <MarketingNavbar />
+      <Container className="page-container">
+        <Paper className="page-paper">
+          <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
+            Student Analytics
+          </Typography>
+          <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Average Score per Student</Typography>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="averageScore" fill="#8884d8" name="Average Score" />
+            </BarChart>
+          </ResponsiveContainer>
 
-  <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
-    <MarketingNavbar />
-    <Container className="page-container">
-      <Paper className="page-paper">
-        <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
-          Student Analytics
-        </Typography>
-        <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Average Score per Student</Typography>
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="averageScore" fill="#8884d8" name="Average Score" />
-          </BarChart>
-        </ResponsiveContainer>
+          <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Average Time per Student (seconds)</Typography>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="averageTime" fill="#82ca9d" name="Average Time (s)" />
+            </BarChart>
+          </ResponsiveContainer>
 
-        <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Average Time per Student (seconds)</Typography>
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="averageTime" fill="#82ca9d" name="Average Time (s)" />
-          </BarChart>
-        </ResponsiveContainer>
-
-      </Paper>
-    </Container>
-    <MarketingFooter />
-  </Box>
-
+        </Paper>
+      </Container>
+      <MarketingFooter />
+    </Box>
+  );
 };
 
 export default Analytics;
