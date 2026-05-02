@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import Navbar from '../components/Navbar';
+import MarketingNavbar from '../components/MarketingNavbar';
+import MarketingFooter from '../components/MarketingFooter';
 import { Box, Container, Paper, Typography, CircularProgress } from '@mui/material';
 
 const Surgery = () => {
@@ -43,9 +44,9 @@ const Surgery = () => {
   }
 
   return (
-      <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
-        <Navbar />
-        <Container className="page-container">
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
+      <MarketingNavbar />
+      <Container className="page-container">
           <Paper className="page-paper">
             <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
               {surgery.title}
@@ -58,6 +59,7 @@ const Surgery = () => {
             </Typography>
           </Paper>
         </Container>
+        <MarketingFooter />
       </Box>
   );
 };

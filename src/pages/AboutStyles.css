@@ -1,0 +1,138 @@
+.about-container {
+  min-height: 100vh;
+  background-color: #020617;
+  color: #f8fafc;
+  overflow-x: hidden;
+}
+
+/* Parallax Hero */
+.about-hero {
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  background-image: linear-gradient(rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 0.9)), url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2000&auto=format&fit=crop');
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  padding-top: 80px; /* Offset for navbar */
+}
+
+.about-hero-content {
+  max-width: 800px;
+  padding: 0 5%;
+  animation: fadeIn 1s ease-out;
+}
+
+.about-title {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.about-subtitle {
+  font-size: 1.2rem;
+  color: #cbd5e1;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Mission Section */
+.mission-section {
+  padding: 5rem 5%;
+  display: flex;
+  justify-content: center;
+  margin-top: -5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.mission-content {
+  max-width: 900px;
+  padding: 3rem;
+  text-align: center;
+}
+
+.mission-content h2 {
+  color: #00e5ff;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.mission-content p {
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: #e2e8f0;
+}
+
+/* Team Section */
+.team-section {
+  padding: 5rem 5%;
+  text-align: center;
+}
+
+.team-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.team-card {
+  padding: 2.5rem 2rem;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.team-card:hover {
+  transform: translateY(-10px);
+  border-color: #00e5ff;
+}
+
+.team-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00e5ff, #0088cc);
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+}
+
+.team-card h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.team-role {
+  color: #00e5ff;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.team-bio {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

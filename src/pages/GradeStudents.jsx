@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import Navbar from '../components/Navbar';
+import MarketingNavbar from '../components/MarketingNavbar';
+import MarketingFooter from '../components/MarketingFooter';
 import { Box, Typography, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Button, CircularProgress, Modal, Grid, Tabs, Tab, AppBar } from '@mui/material';
 
 const modalStyle = {
@@ -142,8 +143,8 @@ const GradeStudents = () => {
 
 
   return (
-    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
-      <Navbar />
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
+      <MarketingNavbar />
       <Container className="page-container">
         <Paper className="page-paper">
           <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
@@ -279,6 +280,7 @@ const GradeStudents = () => {
             </Modal>
         )}
       </Container>
+      <MarketingFooter />
     </Box>
   );
 };

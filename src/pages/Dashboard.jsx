@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../hooks/useAuth';
-import Navbar from '../components/Navbar';
+import MarketingNavbar from '../components/MarketingNavbar';
+import MarketingFooter from '../components/MarketingFooter';
 import { Box, Container, Grid, Typography, Paper, CircularProgress, Button } from '@mui/material';
 
 const Dashboard = () => {
@@ -57,8 +58,8 @@ const Dashboard = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
-      <Navbar />
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
+      <MarketingNavbar />
       <Container maxWidth={false} sx={{ py: 4, width: '100vw' }}>
         <Typography variant="h4" component="h1" sx={{ mb: 4, textAlign: 'center' }}>
           SurgiVerse Dashboard
@@ -106,6 +107,7 @@ const Dashboard = () => {
           ))}
         </Grid>
       </Container>
+      <MarketingFooter />
     </Box>
   );
 };

@@ -1,0 +1,32 @@
+.marketing-footer {
+  padding: 2rem 5%;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(2, 6, 23, 0.4);
+  backdrop-filter: blur(12px);
+  position: relative;
+  z-index: 100;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.footer-logo {
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 1.5px;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}

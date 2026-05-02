@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import Navbar from '../components/Navbar';
+import MarketingNavbar from '../components/MarketingNavbar';
+import MarketingFooter from '../components/MarketingFooter';
 import { Box, Typography, Slider, Switch, FormControlLabel, Button, Container, Paper, CircularProgress, Grid, TextField } from '@mui/material';
 
 const GameSettings = () => {
@@ -57,8 +58,8 @@ const GameSettings = () => {
   }
 
   return (
-    <Box>
-      <Navbar />
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
+      <MarketingNavbar />
       <Container className="page-container">
         <Paper className="page-paper">
           <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
@@ -131,6 +132,7 @@ const GameSettings = () => {
           </Button>
         </Paper>
       </Container>
+      <MarketingFooter />
     </Box>
   );
 };

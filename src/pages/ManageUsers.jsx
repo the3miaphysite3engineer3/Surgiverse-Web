@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import Navbar from '../components/Navbar';
+import MarketingNavbar from '../components/MarketingNavbar';
+import MarketingFooter from '../components/MarketingFooter';
 import { Box, Typography, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Select, MenuItem, Button, CircularProgress } from '@mui/material';
 
 const ManageUsers = () => {
@@ -48,8 +49,8 @@ const ManageUsers = () => {
   }
 
   return (
-    <Box>
-      <Navbar />
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
+      <MarketingNavbar />
       <Container className="page-container">
         <Paper className="page-paper">
           <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
@@ -86,6 +87,7 @@ const ManageUsers = () => {
           </TableContainer>
         </Paper>
       </Container>
+      <MarketingFooter />
     </Box>
   );
 };

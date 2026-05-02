@@ -9,7 +9,8 @@ import {
     AccordionDetails 
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import Navbar from '../components/Navbar';
+import MarketingNavbar from '../components/MarketingNavbar';
+import MarketingFooter from '../components/MarketingFooter';
 import AIAssistant from '../components/AIAssistant';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -137,8 +138,8 @@ const SurgeryDetails = () => {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
-      <Navbar />
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
+      <MarketingNavbar />
       <Container className="page-container">
         <Paper elevation={3} className="page-paper">
           <Typography variant="h4" component="h1" sx={{ mb: 2, color: 'primary.main', textAlign: 'center' }}>
@@ -303,6 +304,7 @@ const SurgeryDetails = () => {
           {selectedAttempt && <AIAssistant attempt={selectedAttempt} onClose={handleCloseAIAssistant} />}
         </Box>
       </Modal>
+      <MarketingFooter />
     </Box>
   );
 };

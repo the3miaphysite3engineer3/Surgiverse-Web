@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../hooks/useAuth';
-import Navbar from '../components/Navbar';
+import MarketingNavbar from '../components/MarketingNavbar';
+import MarketingFooter from '../components/MarketingFooter';
 import { Box, Container, Paper, Typography, TextField, Button, CircularProgress } from '@mui/material';
 
 const UserProfile = () => {
@@ -64,9 +65,9 @@ const UserProfile = () => {
   }
 
   return (
-      <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%" }}>
-        <Navbar />
-        <Container className="page-container">
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
+      <MarketingNavbar />
+      <Container className="page-container">
           <Paper className="page-paper">
             <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
               User Profile
@@ -104,6 +105,7 @@ const UserProfile = () => {
             )}
           </Paper>
         </Container>
+        <MarketingFooter />
       </Box>
   );
 };

@@ -82,6 +82,13 @@
 .scope-container #authBtn { width: 100%; padding: 15px; background: var(--medical-blue); border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; }
 
 
+.scope-container .login-footer-wrapper {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    z-index: 100;
+}
+
 /* --- RESPONSIVE STYLES --- */
 
 /* MOBILE DEVICES (max-width: 768px) */

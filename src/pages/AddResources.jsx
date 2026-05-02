@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import Navbar from '../components/Navbar';
+import MarketingNavbar from '../components/MarketingNavbar';
+import MarketingFooter from '../components/MarketingFooter';
 import { Box, Typography, Container, Paper, TextField, Button, CircularProgress } from '@mui/material';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -38,8 +39,8 @@ const AddResources = () => {
   };
 
   return (
-    <Box>
-      <Navbar />
+    <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
+      <MarketingNavbar />
       <Container className="page-container">
         <Paper className="page-paper">
           <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
@@ -68,6 +69,7 @@ const AddResources = () => {
           </form>
         </Paper>
       </Container>
+      <MarketingFooter />
     </Box>
   );
 };

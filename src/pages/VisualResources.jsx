@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import Navbar from '../components/Navbar';
+import MarketingNavbar from '../components/MarketingNavbar';
+import MarketingFooter from '../components/MarketingFooter';
 import {
   Box,
   Typography,
@@ -845,245 +846,245 @@ const VisualResources = () => {
     } finally { setLoading(false); }
   };
 
-  return (
-    <Box>
-      <Navbar />
-      <Container className="page-container">
-        <Paper className="page-paper">
-          <Typography variant="h4" component="h1" sx={{ mb: 3 }}>Visual Resources</Typography>
-          <Typography sx={{ mb: 3 }}>
-            Upload or link reference &amp; comparison videos. Compare via text API, or start a
-            <strong> live session</strong> — video frames are extracted and sent to the model so you can discuss them
-            with voice, camera, and text.
-          </Typography>
+  <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
+    <MarketingNavbar />
+    <Container className="page-container">
+      <Paper className="page-paper">
+        <Typography variant="h4" component="h1" sx={{ mb: 3 }}>Visual Resources</Typography>
+        <Typography sx={{ mb: 3 }}>
+          Upload or link reference &amp; comparison videos. Compare via text API, or start a
+          <strong> live session</strong> — video frames are extracted and sent to the model so you can discuss them
+          with voice, camera, and text.
+        </Typography>
 
-          <Box component="form" noValidate>
-            <Grid container spacing={3}>
-              {/* Reference */}
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" sx={{ mb: 1 }}>Reference Video</Typography>
-                <Button variant="outlined" component="label" fullWidth>
-                  Select Reference Video
-                  <input type="file" hidden accept="video/*" onChange={(e) => { setReferenceFile(e.target.files?.[0] ?? null); setVideosSentToLive(false); }} />
+        <Box component="form" noValidate>
+          <Grid container spacing={3}>
+            {/* Reference */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" sx={{ mb: 1 }}>Reference Video</Typography>
+              <Button variant="outlined" component="label" fullWidth>
+                Select Reference Video
+                <input type="file" hidden accept="video/*" onChange={(e) => { setReferenceFile(e.target.files?.[0] ?? null); setVideosSentToLive(false); }} />
+              </Button>
+              {referenceFile && <Typography sx={{ mt: 1 }}>{referenceFile.name} ({(referenceFile.size / 1024 / 1024).toFixed(1)}MB)</Typography>}
+              {referencePreview && <Box component="video" src={referencePreview} controls sx={{ width: '100%', mt: 2, borderRadius: 1 }} />}
+              <TextField label="Reference YouTube URL" value={referenceYoutube}
+                onChange={(e) => { setReferenceYoutube(e.target.value); setVideosSentToLive(false); }}
+                fullWidth sx={{ mt: 2 }} placeholder="https://www.youtube.com/watch?v=..." />
+              <TextField label="Save title (for Firestore)" value={refSaveTitle}
+                onChange={(e) => setRefSaveTitle(e.target.value)} fullWidth sx={{ mt: 2 }} placeholder="Reference title to save" />
+              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                <Button variant="contained" disabled={!referenceFile || savingRef} onClick={async (e) => { e.preventDefault(); await saveVideoToRefVideos(referenceFile, refSaveTitle); }}>
+                  {savingRef ? <CircularProgress size={20} /> : 'Save Reference Frames'}
                 </Button>
-                {referenceFile && <Typography sx={{ mt: 1 }}>{referenceFile.name} ({(referenceFile.size / 1024 / 1024).toFixed(1)}MB)</Typography>}
-                {referencePreview && <Box component="video" src={referencePreview} controls sx={{ width: '100%', mt: 2, borderRadius: 1 }} />}
-                <TextField label="Reference YouTube URL" value={referenceYoutube}
-                  onChange={(e) => { setReferenceYoutube(e.target.value); setVideosSentToLive(false); }}
-                  fullWidth sx={{ mt: 2 }} placeholder="https://www.youtube.com/watch?v=..." />
-                <TextField label="Save title (for Firestore)" value={refSaveTitle}
-                  onChange={(e) => setRefSaveTitle(e.target.value)} fullWidth sx={{ mt: 2 }} placeholder="Reference title to save" />
-                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                  <Button variant="contained" disabled={!referenceFile || savingRef} onClick={async (e) => { e.preventDefault(); await saveVideoToRefVideos(referenceFile, refSaveTitle); }}>
-                    {savingRef ? <CircularProgress size={20} /> : 'Save Reference Frames'}
-                  </Button>
-                  {videoProgress && <Typography variant="body2" sx={{ alignSelf: 'center' }}>{videoProgress}</Typography>}
-                </Box>
-              </Grid>
+                {videoProgress && <Typography variant="body2" sx={{ alignSelf: 'center' }}>{videoProgress}</Typography>}
+              </Box>
+            </Grid>
 
-              {/* Comparison */}
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" sx={{ mb: 1 }}>Comparison Video</Typography>
-                <Button variant="outlined" component="label" fullWidth>
-                  Select Comparison Video
-                  <input type="file" hidden accept="video/*" onChange={(e) => { setComparisonFile(e.target.files?.[0] ?? null); setVideosSentToLive(false); }} />
+            {/* Comparison */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" sx={{ mb: 1 }}>Comparison Video</Typography>
+              <Button variant="outlined" component="label" fullWidth>
+                Select Comparison Video
+                <input type="file" hidden accept="video/*" onChange={(e) => { setComparisonFile(e.target.files?.[0] ?? null); setVideosSentToLive(false); }} />
+              </Button>
+              {comparisonFile && <Typography sx={{ mt: 1 }}>{comparisonFile.name} ({(comparisonFile.size / 1024 / 1024).toFixed(1)}MB)</Typography>}
+              {comparisonPreview && <Box component="video" src={comparisonPreview} controls sx={{ width: '100%', mt: 2, borderRadius: 1 }} />}
+              <TextField label="Comparison YouTube URL" value={comparisonYoutube}
+                onChange={(e) => { setComparisonYoutube(e.target.value); setVideosSentToLive(false); }}
+                fullWidth sx={{ mt: 2 }} placeholder="https://www.youtube.com/watch?v=..." />
+              <TextField label="Save title (for Firestore)" value={cmpSaveTitle}
+                onChange={(e) => setCmpSaveTitle(e.target.value)} fullWidth sx={{ mt: 2 }} placeholder="Comparison title to save" />
+              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                <Button variant="contained" color="secondary" disabled={!comparisonFile || savingRef} onClick={async (e) => { e.preventDefault(); await saveVideoToRefVideos(comparisonFile, cmpSaveTitle); }}>
+                  {savingRef ? <CircularProgress size={20} /> : 'Save Comparison Frames'}
                 </Button>
-                {comparisonFile && <Typography sx={{ mt: 1 }}>{comparisonFile.name} ({(comparisonFile.size / 1024 / 1024).toFixed(1)}MB)</Typography>}
-                {comparisonPreview && <Box component="video" src={comparisonPreview} controls sx={{ width: '100%', mt: 2, borderRadius: 1 }} />}
-                <TextField label="Comparison YouTube URL" value={comparisonYoutube}
-                  onChange={(e) => { setComparisonYoutube(e.target.value); setVideosSentToLive(false); }}
-                  fullWidth sx={{ mt: 2 }} placeholder="https://www.youtube.com/watch?v=..." />
-                <TextField label="Save title (for Firestore)" value={cmpSaveTitle}
-                  onChange={(e) => setCmpSaveTitle(e.target.value)} fullWidth sx={{ mt: 2 }} placeholder="Comparison title to save" />
-                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                  <Button variant="contained" color="secondary" disabled={!comparisonFile || savingRef} onClick={async (e) => { e.preventDefault(); await saveVideoToRefVideos(comparisonFile, cmpSaveTitle); }}>
-                    {savingRef ? <CircularProgress size={20} /> : 'Save Comparison Frames'}
-                  </Button>
-                </Box>
-              </Grid>
+              </Box>
+            </Grid>
 
-              {/* Prompt */}
-              <Grid item xs={12}>
-                <TextField label="Conversation prompt (non-live)" multiline minRows={4} fullWidth
-                  value={conversationPrompt} onChange={(e) => setConversationPrompt(e.target.value)}
-                  helperText="For the non-live Compare/Discuss buttons below." />
-              </Grid>
+            {/* Prompt */}
+            <Grid item xs={12}>
+              <TextField label="Conversation prompt (non-live)" multiline minRows={4} fullWidth
+                value={conversationPrompt} onChange={(e) => setConversationPrompt(e.target.value)}
+                helperText="For the non-live Compare/Discuss buttons below." />
+            </Grid>
 
-              {/* Non-live buttons */}
-              <Grid item xs={12}>
-                {statusMessage && <Alert severity={statusMessage.severity} sx={{ mb: 2 }}>{statusMessage.text}</Alert>}
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  <Button variant="contained" disabled={loading} onClick={(e) => { e.preventDefault(); runMediaRequest({ prompt: 'Compare the reference video with the comparison video and describe the main similarities and differences.', title: 'Comparison Result' }); }}>
-                    {loading ? <CircularProgress size={24} /> : 'Compare Videos'}
-                  </Button>
-                  <Button variant="outlined" color="secondary" disabled={loading} onClick={(e) => { e.preventDefault(); runMediaRequest({ prompt: conversationPrompt, title: 'Media Conversation Result' }); }}>
-                    {loading ? <CircularProgress size={24} /> : 'Discuss Media'}
-                  </Button>
-                </Box>
-              </Grid>
+            {/* Non-live buttons */}
+            <Grid item xs={12}>
+              {statusMessage && <Alert severity={statusMessage.severity} sx={{ mb: 2 }}>{statusMessage.text}</Alert>}
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Button variant="contained" disabled={loading} onClick={(e) => { e.preventDefault(); runMediaRequest({ prompt: 'Compare the reference video with the comparison video and describe the main similarities and differences.', title: 'Comparison Result' }); }}>
+                  {loading ? <CircularProgress size={24} /> : 'Compare Videos'}
+                </Button>
+                <Button variant="outlined" color="secondary" disabled={loading} onClick={(e) => { e.preventDefault(); runMediaRequest({ prompt: conversationPrompt, title: 'Media Conversation Result' }); }}>
+                  {loading ? <CircularProgress size={24} /> : 'Discuss Media'}
+                </Button>
+              </Box>
+            </Grid>
 
-              {/* ═══════ LIVE SESSION ═══════ */}
-              <Grid item xs={12}>
-                <Divider sx={{ my: 3 }} />
-                <Typography variant="h5" sx={{ mb: 1 }}>Live Audio, Camera &amp; Video Session</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Video frames are extracted from your uploaded files and sent as images to the live model.
-                  Then use mic, camera, and text to discuss them in real time with audio responses.
+            {/* ═══════ LIVE SESSION ═══════ */}
+            <Grid item xs={12}>
+              <Divider sx={{ my: 3 }} />
+              <Typography variant="h5" sx={{ mb: 1 }}>Live Audio, Camera &amp; Video Session</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Video frames are extracted from your uploaded files and sent as images to the live model.
+                Then use mic, camera, and text to discuss them in real time with audio responses.
+              </Typography>
+
+              {/* System Instruction */}
+              <TextField label="System Instruction" multiline minRows={2} fullWidth
+                value={systemInstruction} onChange={(e) => setSystemInstruction(e.target.value)}
+                sx={{ mb: 2 }} helperText="Set before starting."
+                disabled={liveStatus === 'connected' || liveStatus === 'connecting'} />
+
+              {/* Status */}
+              <Paper sx={{
+                p: 2, mb: 2,
+                backgroundColor: liveStatus === 'connected' ? '#e8f5e9' : liveStatus === 'connecting' ? '#fff3e0' : liveStatus === 'error' ? '#ffebee' : '#f5f5f5',
+                border: 1, borderColor: liveStatus === 'connected' ? 'success.main' : liveStatus === 'error' ? 'error.main' : 'divider', borderRadius: 1,
+              }}>
+                <Typography variant="subtitle1">
+                  Status: <strong>{liveStatus.toUpperCase()}</strong>
+                  {isAudioPlaying && ' 🔊'}
+                  {recording && ' 🎙️'}
+                  {cameraActive && ` 📷(${framesSent})`}
+                  {videosSentToLive && ' 🎬 Videos loaded'}
+                  {sendingVideos && ' ⏳ Extracting frames...'}
                 </Typography>
-
-                {/* System Instruction */}
-                <TextField label="System Instruction" multiline minRows={2} fullWidth
-                  value={systemInstruction} onChange={(e) => setSystemInstruction(e.target.value)}
-                  sx={{ mb: 2 }} helperText="Set before starting."
-                  disabled={liveStatus === 'connected' || liveStatus === 'connecting'} />
-
-                {/* Status */}
-                <Paper sx={{
-                  p: 2, mb: 2,
-                  backgroundColor: liveStatus === 'connected' ? '#e8f5e9' : liveStatus === 'connecting' ? '#fff3e0' : liveStatus === 'error' ? '#ffebee' : '#f5f5f5',
-                  border: 1, borderColor: liveStatus === 'connected' ? 'success.main' : liveStatus === 'error' ? 'error.main' : 'divider', borderRadius: 1,
-                }}>
-                  <Typography variant="subtitle1">
-                    Status: <strong>{liveStatus.toUpperCase()}</strong>
-                    {isAudioPlaying && ' 🔊'}
-                    {recording && ' 🎙️'}
-                    {cameraActive && ` 📷(${framesSent})`}
-                    {videosSentToLive && ' 🎬 Videos loaded'}
-                    {sendingVideos && ' ⏳ Extracting frames...'}
-                  </Typography>
-                  {(sendingVideos || videoProgress) && (
-                    <>
-                      {videoProgress && <Typography variant="body2" sx={{ mt: 0.5 }}>{videoProgress}</Typography>}
-                      <LinearProgress sx={{ mt: 1 }} />
-                    </>
-                  )}
-                </Paper>
-
-                {/* Session Controls */}
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-                  <Button variant="contained" size="large" onClick={startLiveSession}
-                    disabled={liveStatus === 'connecting' || liveStatus === 'connected'}>
-                    🚀 Start Live Session
-                  </Button>
-                  <Button variant="outlined" color="error" size="large" onClick={stopLiveSession}
-                    disabled={!sessionRef.current}>
-                    ⏹️ Stop Session
-                  </Button>
-                  <Button variant="outlined" onClick={resendVideos}
-                    disabled={!sessionRef.current || sendingVideos}>
-                    🔄 Resend Videos
-                  </Button>
-                </Box>
-
-                {/* Video status */}
-                {liveStatus === 'connected' && (
-                  <Paper sx={{ p: 1.5, mb: 2, backgroundColor: videosSentToLive ? '#e3f2fd' : '#fff8e1', borderRadius: 1 }}>
-                    <Typography variant="body2">
-                      {videosSentToLive
-                        ? `🎬 Video frames loaded. Ref: ${referenceFile?.name || referenceYoutube || 'none'} | Cmp: ${comparisonFile?.name || comparisonYoutube || 'none'}`
-                        : sendingVideos
-                          ? '⏳ Extracting and sending video frames...'
-                          : '⚠️ No video frames sent yet. Click "Resend Videos" or ensure videos are selected before starting.'}
-                    </Typography>
-                  </Paper>
+                {(sendingVideos || videoProgress) && (
+                  <>
+                    {videoProgress && <Typography variant="body2" sx={{ mt: 0.5 }}>{videoProgress}</Typography>}
+                    <LinearProgress sx={{ mt: 1 }} />
+                  </>
                 )}
+              </Paper>
 
-                {/* Mic */}
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Microphone</Typography>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-                  <Button variant="contained" color="success" onClick={startRecording}
-                    disabled={!sessionRef.current || recording}>
-                    🎙️ Start Recording
-                  </Button>
-                  <Button variant="outlined" color="error" onClick={stopRecording} disabled={!recording}>
-                    ⏹️ Stop Recording
-                  </Button>
-                </Box>
+              {/* Session Controls */}
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+                <Button variant="contained" size="large" onClick={startLiveSession}
+                  disabled={liveStatus === 'connecting' || liveStatus === 'connected'}>
+                  🚀 Start Live Session
+                </Button>
+                <Button variant="outlined" color="error" size="large" onClick={stopLiveSession}
+                  disabled={!sessionRef.current}>
+                  ⏹️ Stop Session
+                </Button>
+                <Button variant="outlined" onClick={resendVideos}
+                  disabled={!sessionRef.current || sendingVideos}>
+                  🔄 Resend Videos
+                </Button>
+              </Box>
 
-                {/* Camera */}
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Camera</Typography>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2, alignItems: 'center' }}>
-                  <Button variant="contained" color="info" onClick={startCamera}
-                    disabled={!sessionRef.current || cameraActive}>
-                    📷 Start Camera
-                  </Button>
-                  <Button variant="outlined" color="error" onClick={stopCamera} disabled={!cameraActive}>
-                    📷 Stop
-                  </Button>
-                  <Button variant="outlined" onClick={switchCamera} disabled={!sessionRef.current}>
-                    🔄 ({facingMode === 'user' ? 'Front' : 'Back'})
-                  </Button>
-                  <FormControl size="small" sx={{ minWidth: 120 }}>
-                    <InputLabel>Camera</InputLabel>
-                    <Select value={facingMode} label="Camera" onChange={(e) => {
-                      setFacingMode(e.target.value);
-                      if (cameraActive) { stopCamera(); addLiveLog('Camera stopped.'); }
-                    }}>
-                      <MenuItem value="user">Front</MenuItem>
-                      <MenuItem value="environment">Back</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-
-                {/* Camera Preview */}
-                <Box sx={{
-                  mb: 2, position: 'relative', width: '100%', maxWidth: 480,
-                  borderRadius: 2, overflow: 'hidden', backgroundColor: '#000',
-                  display: cameraActive || liveStatus === 'connected' ? 'block' : 'none',
-                }}>
-                  <video ref={cameraVideoRef} autoPlay playsInline muted
-                    style={{ width: '100%', display: 'block', transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }} />
-                  {cameraActive && (
-                    <Box sx={{ position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', px: 1, py: 0.5, borderRadius: 1, fontSize: 12 }}>
-                      🔴 LIVE — {framesSent} frames
-                    </Box>
-                  )}
-                </Box>
-
-                {/* Text */}
-                <TextField label="Live text prompt" multiline minRows={3} fullWidth
-                  value={liveTextInput} onChange={(e) => setLiveTextInput(e.target.value)}
-                  sx={{ mb: 2 }} helperText="Ask about the videos, camera feed, etc." />
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-                  <Button variant="contained" onClick={sendLiveText}
-                    disabled={!sessionRef.current || !liveTextInput.trim()}>
-                    📤 Send
-                  </Button>
-                  <Button variant="outlined" onClick={() => setLiveLog([])} disabled={!liveLog.length}>
-                    🗑️ Clear
-                  </Button>
-                </Box>
-
-                {/* Log */}
-                <Paper sx={{ p: 2, backgroundColor: '#f7f8fb', maxHeight: 300, overflow: 'auto', fontFamily: 'monospace', fontSize: 13 }}>
-                  {!liveLog.length
-                    ? <Typography variant="body2" color="text.secondary">No events yet.</Typography>
-                    : liveLog.map((e, i) => <Typography key={i} variant="body2" sx={{ mb: 0.5 }}>{e}</Typography>)}
+              {/* Video status */}
+              {liveStatus === 'connected' && (
+                <Paper sx={{ p: 1.5, mb: 2, backgroundColor: videosSentToLive ? '#e3f2fd' : '#fff8e1', borderRadius: 1 }}>
+                  <Typography variant="body2">
+                    {videosSentToLive
+                      ? `🎬 Video frames loaded. Ref: ${referenceFile?.name || referenceYoutube || 'none'} | Cmp: ${comparisonFile?.name || comparisonYoutube || 'none'}`
+                      : sendingVideos
+                        ? '⏳ Extracting and sending video frames...'
+                        : '⚠️ No video frames sent yet. Click "Resend Videos" or ensure videos are selected before starting.'}
+                  </Typography>
                 </Paper>
+              )}
 
-                {/* Replay */}
-                {receivedAudioUrl && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle1" sx={{ mb: 1 }}>🔊 Replay</Typography>
-                    <audio controls ref={audioRef} src={receivedAudioUrl} style={{ width: '100%' }} />
+              {/* Mic */}
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>Microphone</Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+                <Button variant="contained" color="success" onClick={startRecording}
+                  disabled={!sessionRef.current || recording}>
+                  🎙️ Start Recording
+                </Button>
+                <Button variant="outlined" color="error" onClick={stopRecording} disabled={!recording}>
+                  ⏹️ Stop Recording
+                </Button>
+              </Box>
+
+              {/* Camera */}
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>Camera</Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2, alignItems: 'center' }}>
+                <Button variant="contained" color="info" onClick={startCamera}
+                  disabled={!sessionRef.current || cameraActive}>
+                  📷 Start Camera
+                </Button>
+                <Button variant="outlined" color="error" onClick={stopCamera} disabled={!cameraActive}>
+                  📷 Stop
+                </Button>
+                <Button variant="outlined" onClick={switchCamera} disabled={!sessionRef.current}>
+                  🔄 ({facingMode === 'user' ? 'Front' : 'Back'})
+                </Button>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Camera</InputLabel>
+                  <Select value={facingMode} label="Camera" onChange={(e) => {
+                    setFacingMode(e.target.value);
+                    if (cameraActive) { stopCamera(); addLiveLog('Camera stopped.'); }
+                  }}>
+                    <MenuItem value="user">Front</MenuItem>
+                    <MenuItem value="environment">Back</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {/* Camera Preview */}
+              <Box sx={{
+                mb: 2, position: 'relative', width: '100%', maxWidth: 480,
+                borderRadius: 2, overflow: 'hidden', backgroundColor: '#000',
+                display: cameraActive || liveStatus === 'connected' ? 'block' : 'none',
+              }}>
+                <video ref={cameraVideoRef} autoPlay playsInline muted
+                  style={{ width: '100%', display: 'block', transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }} />
+                {cameraActive && (
+                  <Box sx={{ position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', px: 1, py: 0.5, borderRadius: 1, fontSize: 12 }}>
+                    🔴 LIVE — {framesSent} frames
                   </Box>
                 )}
-              </Grid>
+              </Box>
 
-              {resultText && (
-                <Grid item xs={12}>
-                  <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>{resultTitle || 'Result'}</Typography>
-                  <Paper sx={{ p: 2, backgroundColor: '#f7f8fb' }}>
-                    <Typography whiteSpace="pre-wrap">{resultText}</Typography>
-                  </Paper>
-                </Grid>
+              {/* Text */}
+              <TextField label="Live text prompt" multiline minRows={3} fullWidth
+                value={liveTextInput} onChange={(e) => setLiveTextInput(e.target.value)}
+                sx={{ mb: 2 }} helperText="Ask about the videos, camera feed, etc." />
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+                <Button variant="contained" onClick={sendLiveText}
+                  disabled={!sessionRef.current || !liveTextInput.trim()}>
+                  📤 Send
+                </Button>
+                <Button variant="outlined" onClick={() => setLiveLog([])} disabled={!liveLog.length}>
+                  🗑️ Clear
+                </Button>
+              </Box>
+
+              {/* Log */}
+              <Paper sx={{ p: 2, backgroundColor: '#f7f8fb', maxHeight: 300, overflow: 'auto', fontFamily: 'monospace', fontSize: 13 }}>
+                {!liveLog.length
+                  ? <Typography variant="body2" color="text.secondary">No events yet.</Typography>
+                  : liveLog.map((e, i) => <Typography key={i} variant="body2" sx={{ mb: 0.5 }}>{e}</Typography>)}
+              </Paper>
+
+              {/* Replay */}
+              {receivedAudioUrl && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>🔊 Replay</Typography>
+                  <audio controls ref={audioRef} src={receivedAudioUrl} style={{ width: '100%' }} />
+                </Box>
               )}
             </Grid>
-          </Box>
-        </Paper>
-      </Container>
-    </Box>
-  );
+
+            {resultText && (
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>{resultTitle || 'Result'}</Typography>
+                <Paper sx={{ p: 2, backgroundColor: '#f7f8fb' }}>
+                  <Typography whiteSpace="pre-wrap">{resultText}</Typography>
+                </Paper>
+              </Grid>
+            )}
+          </Grid>
+        </Box>
+      </Paper>
+    </Container>
+    <MarketingFooter />
+  </Box>
+
 };
 
 export default VisualResources;

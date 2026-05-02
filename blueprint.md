@@ -26,10 +26,11 @@ SurgiVerse is a web-based platform designed for surgical education and training.
 *   **Profile Page:** Users can view and update their profile information.
 *   **Dynamic Navbar:** The navigation bar dynamically adjusts its content based on the user's role.
 
-## Current Task: Add `sceneName` and `viewSceneName`
+## New Features
 
-### Plan
+### Marketing & Public Pages
 
-1.  **Update `AddSurgery.jsx`:** Add new input fields for `sceneName` and `viewSceneName` to the "Add Surgery" form.
-2.  **Update `SurgeryDetails.jsx`:** Display the `sceneName` and `viewSceneName` on the "Surgery Details" page.
-3.  **Update `blueprint.md`:** Document the new fields and the updated functionality.
+*   **Public Landing (`/`):** A modern, aesthetically rich marketing landing page highlighting the "Six Dimensions of Mastery" with parallax effects.
+*   **About Us (`/about`):** Introduces the team and mission behind SurgiVerse with a parallax hero section.
+*   **Contact Us (`/contact`):** A futuristic contact form interface for institutions and beta testers.
+*   **Login Portal (`/login`):** The interactive endoscope/ECG canvas login page, now overlaid with the global marketing navbar and footer.
