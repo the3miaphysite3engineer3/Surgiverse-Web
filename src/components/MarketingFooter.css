@@ -23,13 +23,27 @@
 }
 
 .footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   color: #94a3b8;
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color 0.3s ease, transform 0.3s ease;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .footer-social a:hover {
   color: #00e5ff;
+  background: rgba(0, 229, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.footer-social a svg {
+  width: 20px;
+  height: 20px;
 }
 
 .footer-logo {

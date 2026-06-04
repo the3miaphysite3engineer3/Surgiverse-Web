@@ -1,4 +1,7 @@
 import React from 'react';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import './MarketingFooter.css';
 
 const MarketingFooter = () => {
@@ -7,9 +10,15 @@ const MarketingFooter = () => {
       <div className="footer-content">
         <div className="footer-logo">SURGIVERSE</div>
         <div className="footer-social">
-          <a href="https://www.instagram.com/surgi__verse/" target="_blank" rel="noopener noreferrer">Instagram</a>
-          <a href="https://www.facebook.com/profile.php?id=61590697887074" target="_blank" rel="noopener noreferrer">Facebook</a>
-          <a href="https://www.linkedin.com/company/surgiverse28" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <a href="https://www.instagram.com/surgi__verse/" target="_blank" rel="noopener noreferrer">
+            <InstagramIcon fontSize="large" />
+          </a>
+          <a href="https://www.facebook.com/profile.php?id=61590697887074" target="_blank" rel="noopener noreferrer">
+            <FacebookIcon fontSize="large" />
+          </a>
+          <a href="https://www.linkedin.com/company/surgiverse28" target="_blank" rel="noopener noreferrer">
+            <LinkedInIcon fontSize="large" />
+          </a>
         </div>
         <p>&copy; {new Date().getFullYear()} SurgiVerse Technologies. All rights reserved.</p>
       </div>
