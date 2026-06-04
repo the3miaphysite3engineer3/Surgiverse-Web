@@ -11,7 +11,7 @@ const About = () => {
     { name: "Yousif Hazim", role: "3D Modeling & Unity Dev", bio: "3D Modeling, Unity XR Toolkit" },
     { name: "Youssef Habil", role: "Backend Architect", bio: "Firebase Auth, Firestore, Cloud Functions" },
     { name: "Mazen Saeed", role: "VR Interaction Developer", bio: "Unity XR Toolkit, Collider Systems", image: "/team/mazen.png" },
-    { name: "Kirolos Sedra", role: "Senior Software Mentor", bio: "Guiding software architecture, mentoring team members, code review excellence", image: "/team/sedra.png" }
+    { name: "Kirolos Sedra", role: "Software Architect", bio: "Guiding software architecture, mentoring team members, code review excellence", image: "/team/sedra.png" }
   ];
 
   return (

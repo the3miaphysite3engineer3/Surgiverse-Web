@@ -17,6 +17,21 @@
   font-size: 0.9rem;
 }
 
+.footer-social {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer-social a {
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-social a:hover {
+  color: #00e5ff;
+}
+
 .footer-logo {
   font-weight: 800;
   color: #fff;

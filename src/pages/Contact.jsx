@@ -24,15 +24,11 @@ const Contact = () => {
             <p>Initiate a secure channel with the SurgiVerse deployment team. Whether you're an institution looking to onboard, or a surgeon interested in beta testing, we're ready to interface.</p>
             
             <div className="contact-details">
-              <div className="detail-item">
-                <span className="icon">📡</span>
-                <span>contact@surgiverse.tech</span>
-              </div>
-              <div className="detail-item">
-                <span className="icon">📍</span>
-                <span>Ain Shams University Innovation Hub</span>
-              </div>
-            </div>
+               <div className="detail-item">
+                 <span className="icon">📡</span>
+                 <span>contact@surgiverse.tech</span>
+               </div>
+             </div>
           </div>
         </div>
 
