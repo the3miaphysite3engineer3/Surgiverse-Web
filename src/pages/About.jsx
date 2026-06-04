@@ -5,12 +5,13 @@ import './AboutStyles.css';
 
 const About = () => {
   const team = [
-    { name: "George Joseph Basilious", role: "Lead Engineer, AI Engineer & Cloud Architect", bio: "MLOps, VR Architecture, Gemini AI, Firebase, RAG Pipeline" },
+    { name: "George Tawadrous", role: "Lead Engineer, AI Engineer & Cloud Architect", bio: "MLOps, VR Architecture, Gemini AI, Firebase, RAG Pipeline", image: "/team/george.jpg" },
     { name: "Youssef Hatem", role: "System Haptics Engineer", bio: "Dexmo Glove Integration, XR Physics, Embedded Systems" },
     { name: "Michael Shohda", role: "3D Modeling & Unity Dev", bio: "CT Reconstruction, Unity Interactions" },
     { name: "Yousif Hazim", role: "3D Modeling & Unity Dev", bio: "3D Modeling, Unity XR Toolkit" },
     { name: "Youssef Habil", role: "Backend Architect", bio: "Firebase Auth, Firestore, Cloud Functions" },
-    { name: "Mazen Saeed", role: "VR Interaction Developer", bio: "Unity XR Toolkit, Collider Systems" }
+    { name: "Mazen Saeed", role: "VR Interaction Developer", bio: "Unity XR Toolkit, Collider Systems", image: "/team/mazen.png" },
+    { name: "Kirolos Sedra", role: "Senior Software Mentor", bio: "Guiding software architecture, mentoring team members, code review excellence", image: "/team/sedra.png" }
   ];
 
   return (
@@ -42,8 +43,11 @@ const About = () => {
           {team.map((member, idx) => (
             <div key={idx} className="team-card glass-card">
               <div className="team-avatar">
-                {/* Placeholder initials */}
-                <span>{member.name.split(' ').map(n => n[0]).join('')}</span>
+                {member.image ? (
+                  <img src={member.image} alt={member.name} className="team-avatar-img" />
+                ) : (
+                  <span>{member.name.split(' ').map(n => n[0]).join('')}</span>
+                )}
               </div>
               <h3>{member.name}</h3>
               <p className="team-role">{member.role}</p>
