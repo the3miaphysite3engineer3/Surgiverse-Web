@@ -56,25 +56,20 @@ const AddSurgery = () => {
       }
 
       await runTransaction(db, async (transaction) => {
-        const titleIndexRef = doc(db, 'surgeryTitleIndex', titleLowercase);
-        const existingTitleIndex = await transaction.get(titleIndexRef);
+        const surgeryDocId = `by-title-${encodeURIComponent(titleLowercase)}`;
+        const surgeryRef = doc(db, 'surgeries', surgeryDocId);
+        const existingSurgery = await transaction.get(surgeryRef);
 
-        if (existingTitleIndex.exists()) {
+        if (existingSurgery.exists()) {
           throw new Error('DUPLICATE_SURGERY_TITLE');
         }
 
-        const surgeryRef = doc(collection(db, 'surgeries'));
         transaction.set(surgeryRef, {
           title: trimmedTitle,
           titleLowercase,
           category: trimmedCategory,
           description: trimmedDescription,
           sceneName: trimmedSceneName
-        });
-        transaction.set(titleIndexRef, {
-          surgeryId: surgeryRef.id,
-          title: trimmedTitle,
-          titleLowercase
         });
       });
       setSuccess(true);
