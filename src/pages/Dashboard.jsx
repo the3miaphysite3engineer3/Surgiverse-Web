@@ -33,20 +33,22 @@ const Dashboard = () => {
         }
 
         // Merge surgeries with their corresponding attempts
-        const mergedData = surgeryList.map(surgery => ({
-          ...surgery,
-          attempts: attemptsList.filter(attempt => {
-            const attemptSurgeryId = attempt.surgery_id || attempt.surgeryId;
-            if (attemptSurgeryId === surgery.id) return true;
+        const mergedData = surgeryList.map(surgery => {
+          const surgeryNames = [surgery.title, surgery.procedureName]
+            .map(normalizeValue)
+            .filter(Boolean);
 
-            const attemptProcedureName = normalizeValue(attempt.procedureName);
-            const surgeryNames = [surgery.title, surgery.procedureName]
-              .map(normalizeValue)
-              .filter(Boolean);
+          return {
+            ...surgery,
+            attempts: attemptsList.filter(attempt => {
+              const attemptSurgeryId = attempt.surgery_id || attempt.surgeryId;
+              if (attemptSurgeryId === surgery.id) return true;
 
-            return attemptProcedureName && surgeryNames.includes(attemptProcedureName);
-          })
-        }));
+              const attemptProcedureName = normalizeValue(attempt.procedureName);
+              return attemptProcedureName && surgeryNames.includes(attemptProcedureName);
+            })
+          };
+        });
 
         setSurgeriesWithAttempts(mergedData);
       } catch (err) {

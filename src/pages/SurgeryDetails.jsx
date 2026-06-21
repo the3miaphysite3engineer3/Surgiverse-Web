@@ -14,7 +14,6 @@ import MarketingFooter from '../components/MarketingFooter';
 import AIAssistant from '../components/AIAssistant';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { normalizeValue } from '../utils/normalizeValue';
 
 const SurgeryDetails = () => {
   const { id } = useParams();
@@ -51,7 +50,8 @@ const SurgeryDetails = () => {
           const attemptsBySurgeryIdSnapshot = await getDocs(attemptsBySurgeryIdQuery);
 
           const surgeryNames = [surgeryData.title, surgeryData.procedureName]
-            .map(normalizeValue)
+            .filter((name) => typeof name === 'string')
+            .map((name) => name.trim())
             .filter(Boolean);
           const surgeryNamesSet = new Set(surgeryNames);
 
@@ -68,13 +68,7 @@ const SurgeryDetails = () => {
 
           const relevantAttemptDocsById = new Map();
           [...attemptsBySurgeryIdSnapshot.docs, ...attemptsByProcedureNameDocs].forEach(d => {
-            const attemptData = d.data();
-            const attemptSurgeryId = attemptData.surgery_id || attemptData.surgeryId;
-            const attemptProcedureName = normalizeValue(attemptData.procedureName);
-
-            if (attemptSurgeryId === id || (attemptProcedureName && surgeryNamesSet.has(attemptProcedureName))) {
-              relevantAttemptDocsById.set(d.id, d);
-            }
+            relevantAttemptDocsById.set(d.id, d);
           });
 
           const attemptsList = await Promise.all(Array.from(relevantAttemptDocsById.values()).map(async d => {
