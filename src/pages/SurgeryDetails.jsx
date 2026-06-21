@@ -14,6 +14,7 @@ import MarketingFooter from '../components/MarketingFooter';
 import AIAssistant from '../components/AIAssistant';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { normalizeValue } from '../utils/normalizeValue';
 
 const SurgeryDetails = () => {
   const { id } = useParams();
@@ -54,21 +55,40 @@ const SurgeryDetails = () => {
             .map((name) => name.trim())
             .filter(Boolean);
           const surgeryNamesSet = new Set(surgeryNames);
+          const normalizedSurgeryNamesSet = new Set(Array.from(surgeryNamesSet).map(normalizeValue).filter(Boolean));
 
           let attemptsByProcedureNameDocs = [];
           if (surgeryNamesSet.size > 0) {
-            const attemptsByProcedureNameQuery = query(
-              attemptsCollection,
-              where('uid', '==', user.uid),
-              where('procedureName', 'in', Array.from(surgeryNamesSet))
+            const surgeryNameBatches = [];
+            const surgeryNamesList = Array.from(surgeryNamesSet);
+            for (let i = 0; i < surgeryNamesList.length; i += 30) {
+              surgeryNameBatches.push(surgeryNamesList.slice(i, i + 30));
+            }
+
+            const procedureNameSnapshots = await Promise.all(
+              surgeryNameBatches.map((batch) =>
+                getDocs(
+                  query(
+                    attemptsCollection,
+                    where('uid', '==', user.uid),
+                    where('procedureName', 'in', batch)
+                  )
+                )
+              )
             );
-            const attemptsByProcedureNameSnapshot = await getDocs(attemptsByProcedureNameQuery);
-            attemptsByProcedureNameDocs = attemptsByProcedureNameSnapshot.docs;
+
+            attemptsByProcedureNameDocs = procedureNameSnapshots.flatMap((snapshot) => snapshot.docs);
           }
 
           const relevantAttemptDocsById = new Map();
           [...attemptsBySurgeryIdSnapshot.docs, ...attemptsByProcedureNameDocs].forEach(d => {
-            relevantAttemptDocsById.set(d.id, d);
+            const attemptData = d.data();
+            const attemptSurgeryId = attemptData.surgery_id || attemptData.surgeryId;
+            const normalizedProcedureName = normalizeValue(attemptData.procedureName);
+
+            if (attemptSurgeryId === id || (normalizedProcedureName && normalizedSurgeryNamesSet.has(normalizedProcedureName))) {
+              relevantAttemptDocsById.set(d.id, d);
+            }
           });
 
           const attemptsList = await Promise.all(Array.from(relevantAttemptDocsById.values()).map(async d => {
