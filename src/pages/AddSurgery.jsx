@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
@@ -28,15 +28,16 @@ const AddSurgery = () => {
       const trimmedDescription = description.trim();
       const trimmedSceneName = sceneName.trim();
 
-      const surgeriesSnapshot = await getDocs(collection(db, 'surgeries'));
-      const normalizedTitle = trimmedTitle.toLowerCase();
-      const surgeryAlreadyExists = surgeriesSnapshot.docs.some((docSnapshot) => {
-        const existingTitle = docSnapshot.data()?.title;
-        return typeof existingTitle === 'string' && existingTitle.trim().toLowerCase() === normalizedTitle;
-      });
+      const surgeriesQuery = query(
+        collection(db, 'surgeries'),
+        where('title', '==', trimmedTitle),
+        limit(1)
+      );
+      const surgeriesSnapshot = await getDocs(surgeriesQuery);
+      const surgeryAlreadyExists = !surgeriesSnapshot.empty;
 
       if (surgeryAlreadyExists) {
-        setError('A surgery with this name already exists.');
+        setError('A surgery with this name already exists. Please choose a different name.');
         return;
       }
 
