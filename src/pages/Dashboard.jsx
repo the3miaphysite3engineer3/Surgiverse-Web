@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import { Box, Container, Grid, Typography, Paper, CircularProgress, Button } from '@mui/material';
+import { normalizeValue } from '../utils/normalizeValue';
 
 const Dashboard = () => {
   const [surgeriesWithAttempts, setSurgeriesWithAttempts] = useState([]);
@@ -32,10 +33,22 @@ const Dashboard = () => {
         }
 
         // Merge surgeries with their corresponding attempts
-        const mergedData = surgeryList.map(surgery => ({
-          ...surgery,
-          attempts: attemptsList.filter(attempt => attempt.surgery_id === surgery.id)
-        }));
+        const mergedData = surgeryList.map(surgery => {
+          const surgeryNames = new Set([surgery.title, surgery.procedureName]
+            .map(normalizeValue)
+            .filter(Boolean));
+
+          return {
+            ...surgery,
+            attempts: attemptsList.filter(attempt => {
+              const attemptSurgeryId = attempt.surgery_id || attempt.surgeryId;
+              if (attemptSurgeryId === surgery.id) return true;
+
+              const attemptProcedureName = normalizeValue(attempt.procedureName);
+              return attemptProcedureName && surgeryNames.has(attemptProcedureName);
+            })
+          };
+        });
 
         setSurgeriesWithAttempts(mergedData);
       } catch (err) {

@@ -14,6 +14,9 @@ import MarketingFooter from '../components/MarketingFooter';
 import AIAssistant from '../components/AIAssistant';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { normalizeValue } from '../utils/normalizeValue';
+
+const FIRESTORE_IN_QUERY_LIMIT = 30;
 
 const SurgeryDetails = () => {
   const { id } = useParams();
@@ -32,17 +35,74 @@ const SurgeryDetails = () => {
         const surgeryDoc = doc(db, 'surgeries', id);
         const surgerySnapshot = await getDoc(surgeryDoc);
 
+        let surgeryData = null;
         if (surgerySnapshot.exists()) {
-          setSurgery({ id: surgerySnapshot.id, ...surgerySnapshot.data() });
+          surgeryData = { id: surgerySnapshot.id, ...surgerySnapshot.data() };
+          setSurgery(surgeryData);
         } else {
           setError('Surgery not found.');
         }
 
-        if (user) {
+        if (user && surgeryData) {
           const attemptsCollection = collection(db, 'attempts');
-          const q = query(attemptsCollection, where('surgery_id', '==', id), where('uid', '==', user.uid));
-          const attemptsSnapshot = await getDocs(q);
-          const attemptsList = await Promise.all(attemptsSnapshot.docs.map(async d => {
+          const attemptsBySurgeryIdQuery = query(
+            attemptsCollection,
+            where('uid', '==', user.uid),
+            where('surgery_id', '==', id)
+          );
+          const attemptsBySurgeryIdSnapshot = await getDocs(attemptsBySurgeryIdQuery);
+
+          const surgeryNames = [surgeryData.title, surgeryData.procedureName]
+            .filter((name) => typeof name === 'string')
+            .map((name) => name.trim())
+            .filter(Boolean);
+          const surgeryNamesSet = new Set(surgeryNames);
+          const normalizedSurgeryNamesSet = new Set(Array.from(surgeryNamesSet).map(normalizeValue).filter(Boolean));
+
+          let attemptsByProcedureNameDocs = [];
+          if (surgeryNamesSet.size > 0) {
+            const surgeryNameBatches = [];
+            const surgeryNamesList = Array.from(surgeryNamesSet);
+            for (let i = 0; i < surgeryNamesList.length; i += FIRESTORE_IN_QUERY_LIMIT) {
+              surgeryNameBatches.push(surgeryNamesList.slice(i, i + FIRESTORE_IN_QUERY_LIMIT));
+            }
+
+            const procedureNameSnapshots = await Promise.all(
+              surgeryNameBatches.map((batch) =>
+                getDocs(
+                  query(
+                    attemptsCollection,
+                    where('uid', '==', user.uid),
+                    where('procedureName', 'in', batch)
+                  )
+                )
+              )
+            );
+
+            attemptsByProcedureNameDocs = procedureNameSnapshots.flatMap((snapshot) => snapshot.docs);
+          }
+
+          const relevantAttemptDocsById = new Map();
+          attemptsBySurgeryIdSnapshot.docs.forEach(d => {
+            const attemptData = d.data();
+            const attemptSurgeryId = attemptData.surgery_id || attemptData.surgeryId;
+            const normalizedProcedureName = normalizeValue(attemptData.procedureName);
+
+            if (attemptSurgeryId === id || (normalizedProcedureName && normalizedSurgeryNamesSet.has(normalizedProcedureName))) {
+              relevantAttemptDocsById.set(d.id, d);
+            }
+          });
+          attemptsByProcedureNameDocs.forEach(d => {
+            const attemptData = d.data();
+            const attemptSurgeryId = attemptData.surgery_id || attemptData.surgeryId;
+            const normalizedProcedureName = normalizeValue(attemptData.procedureName);
+
+            if (attemptSurgeryId === id || (normalizedProcedureName && normalizedSurgeryNamesSet.has(normalizedProcedureName))) {
+              relevantAttemptDocsById.set(d.id, d);
+            }
+          });
+
+          const attemptsList = await Promise.all(Array.from(relevantAttemptDocsById.values()).map(async d => {
             const attemptData = { id: d.id, ...d.data() };
             let chatMessages = [];
             try {
