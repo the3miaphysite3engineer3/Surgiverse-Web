@@ -14,6 +14,7 @@ import MarketingFooter from '../components/MarketingFooter';
 import AIAssistant from '../components/AIAssistant';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { normalizeValue } from '../utils/normalizeValue';
 
 const SurgeryDetails = () => {
   const { id } = useParams();
@@ -24,7 +25,6 @@ const SurgeryDetails = () => {
   const [selectedAttempt, setSelectedAttempt] = useState(null);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const { user } = useAuth();
-  const normalizeValue = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
   useEffect(() => {
     const fetchSurgeryDetails = async () => {
@@ -43,22 +43,41 @@ const SurgeryDetails = () => {
 
         if (user && surgeryData) {
           const attemptsCollection = collection(db, 'attempts');
-          const q = query(attemptsCollection, where('uid', '==', user.uid));
-          const attemptsSnapshot = await getDocs(q);
+          const attemptsBySurgeryIdQuery = query(
+            attemptsCollection,
+            where('uid', '==', user.uid),
+            where('surgery_id', '==', id)
+          );
+          const attemptsBySurgeryIdSnapshot = await getDocs(attemptsBySurgeryIdQuery);
+
           const surgeryNames = [surgeryData.title, surgeryData.procedureName]
             .map(normalizeValue)
             .filter(Boolean);
+          const surgeryNamesSet = new Set(surgeryNames);
 
-          const relevantAttemptDocs = attemptsSnapshot.docs.filter(d => {
+          let attemptsByProcedureNameDocs = [];
+          if (surgeryNamesSet.size > 0) {
+            const attemptsByProcedureNameQuery = query(
+              attemptsCollection,
+              where('uid', '==', user.uid),
+              where('procedureName', 'in', Array.from(surgeryNamesSet))
+            );
+            const attemptsByProcedureNameSnapshot = await getDocs(attemptsByProcedureNameQuery);
+            attemptsByProcedureNameDocs = attemptsByProcedureNameSnapshot.docs;
+          }
+
+          const relevantAttemptDocsById = new Map();
+          [...attemptsBySurgeryIdSnapshot.docs, ...attemptsByProcedureNameDocs].forEach(d => {
             const attemptData = d.data();
             const attemptSurgeryId = attemptData.surgery_id || attemptData.surgeryId;
-            if (attemptSurgeryId === id) return true;
-
             const attemptProcedureName = normalizeValue(attemptData.procedureName);
-            return attemptProcedureName && surgeryNames.includes(attemptProcedureName);
+
+            if (attemptSurgeryId === id || (attemptProcedureName && surgeryNamesSet.has(attemptProcedureName))) {
+              relevantAttemptDocsById.set(d.id, d);
+            }
           });
 
-          const attemptsList = await Promise.all(relevantAttemptDocs.map(async d => {
+          const attemptsList = await Promise.all(Array.from(relevantAttemptDocsById.values()).map(async d => {
             const attemptData = { id: d.id, ...d.data() };
             let chatMessages = [];
             try {

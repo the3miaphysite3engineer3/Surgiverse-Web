@@ -6,13 +6,13 @@ import { useAuth } from '../hooks/useAuth';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import { Box, Container, Grid, Typography, Paper, CircularProgress, Button } from '@mui/material';
+import { normalizeValue } from '../utils/normalizeValue';
 
 const Dashboard = () => {
   const [surgeriesWithAttempts, setSurgeriesWithAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
-  const normalizeValue = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
   useEffect(() => {
     document.title = 'SurgiVerse - Dashboard';
