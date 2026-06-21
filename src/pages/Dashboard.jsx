@@ -34,9 +34,9 @@ const Dashboard = () => {
 
         // Merge surgeries with their corresponding attempts
         const mergedData = surgeryList.map(surgery => {
-          const surgeryNames = [surgery.title, surgery.procedureName]
+          const surgeryNames = new Set([surgery.title, surgery.procedureName]
             .map(normalizeValue)
-            .filter(Boolean);
+            .filter(Boolean));
 
           return {
             ...surgery,
@@ -45,7 +45,7 @@ const Dashboard = () => {
               if (attemptSurgeryId === surgery.id) return true;
 
               const attemptProcedureName = normalizeValue(attempt.procedureName);
-              return attemptProcedureName && surgeryNames.includes(attemptProcedureName);
+              return attemptProcedureName && surgeryNames.has(attemptProcedureName);
             })
           };
         });

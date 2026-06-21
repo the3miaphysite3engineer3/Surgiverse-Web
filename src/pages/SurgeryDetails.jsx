@@ -16,6 +16,8 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { normalizeValue } from '../utils/normalizeValue';
 
+const FIRESTORE_IN_QUERY_LIMIT = 30;
+
 const SurgeryDetails = () => {
   const { id } = useParams();
   const [surgery, setSurgery] = useState(null);
@@ -61,8 +63,8 @@ const SurgeryDetails = () => {
           if (surgeryNamesSet.size > 0) {
             const surgeryNameBatches = [];
             const surgeryNamesList = Array.from(surgeryNamesSet);
-            for (let i = 0; i < surgeryNamesList.length; i += 30) {
-              surgeryNameBatches.push(surgeryNamesList.slice(i, i + 30));
+            for (let i = 0; i < surgeryNamesList.length; i += FIRESTORE_IN_QUERY_LIMIT) {
+              surgeryNameBatches.push(surgeryNamesList.slice(i, i + FIRESTORE_IN_QUERY_LIMIT));
             }
 
             const procedureNameSnapshots = await Promise.all(
@@ -81,7 +83,16 @@ const SurgeryDetails = () => {
           }
 
           const relevantAttemptDocsById = new Map();
-          [...attemptsBySurgeryIdSnapshot.docs, ...attemptsByProcedureNameDocs].forEach(d => {
+          attemptsBySurgeryIdSnapshot.docs.forEach(d => {
+            const attemptData = d.data();
+            const attemptSurgeryId = attemptData.surgery_id || attemptData.surgeryId;
+            const normalizedProcedureName = normalizeValue(attemptData.procedureName);
+
+            if (attemptSurgeryId === id || (normalizedProcedureName && normalizedSurgeryNamesSet.has(normalizedProcedureName))) {
+              relevantAttemptDocsById.set(d.id, d);
+            }
+          });
+          attemptsByProcedureNameDocs.forEach(d => {
             const attemptData = d.data();
             const attemptSurgeryId = attemptData.surgery_id || attemptData.surgeryId;
             const normalizedProcedureName = normalizeValue(attemptData.procedureName);
