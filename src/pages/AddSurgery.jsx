@@ -27,16 +27,16 @@ const AddSurgery = () => {
       const trimmedCategory = category.trim();
       const trimmedDescription = description.trim();
       const trimmedSceneName = sceneName.trim();
-      const normalizedTitle = trimmedTitle.toLowerCase();
+      const titleLowercase = trimmedTitle.toLowerCase();
 
       if (!trimmedTitle) {
-        setError('Surgery name cannot be empty.');
+        setError('Surgery name cannot be empty. Please enter a surgery name in the Title field.');
         return;
       }
 
       const surgeriesQuery = query(
         collection(db, 'surgeries'),
-        where('titleNormalized', '==', normalizedTitle),
+        where('titleLowercase', '==', titleLowercase),
         limit(1)
       );
       const surgeriesSnapshot = await getDocs(surgeriesQuery);
@@ -49,7 +49,7 @@ const AddSurgery = () => {
 
       await addDoc(collection(db, 'surgeries'), {
         title: trimmedTitle,
-        titleNormalized: normalizedTitle,
+        titleLowercase,
         category: trimmedCategory,
         description: trimmedDescription,
         sceneName: trimmedSceneName
