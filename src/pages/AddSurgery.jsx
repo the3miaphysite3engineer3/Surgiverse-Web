@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs, query, where, limit } from 'firebase/firestore';
+import { collection, doc, getDocs, limit, query, runTransaction, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
@@ -39,20 +39,43 @@ const AddSurgery = () => {
         where('titleLowercase', '==', titleLowercase),
         limit(1)
       );
-      const surgeriesSnapshot = await getDocs(surgeriesQuery);
-      const surgeryAlreadyExists = !surgeriesSnapshot.empty;
+      const exactTitleQuery = query(
+        collection(db, 'surgeries'),
+        where('title', '==', trimmedTitle),
+        limit(1)
+      );
+      const [surgeriesSnapshot, exactTitleSnapshot] = await Promise.all([
+        getDocs(surgeriesQuery),
+        getDocs(exactTitleQuery)
+      ]);
+      const surgeryAlreadyExists = !surgeriesSnapshot.empty || !exactTitleSnapshot.empty;
 
       if (surgeryAlreadyExists) {
         setError('A surgery with this name already exists. Please choose a different name.');
         return;
       }
 
-      await addDoc(collection(db, 'surgeries'), {
-        title: trimmedTitle,
-        titleLowercase,
-        category: trimmedCategory,
-        description: trimmedDescription,
-        sceneName: trimmedSceneName
+      await runTransaction(db, async (transaction) => {
+        const titleIndexRef = doc(db, 'surgeryTitleIndex', titleLowercase);
+        const existingTitleIndex = await transaction.get(titleIndexRef);
+
+        if (existingTitleIndex.exists()) {
+          throw new Error('DUPLICATE_SURGERY_TITLE');
+        }
+
+        const surgeryRef = doc(collection(db, 'surgeries'));
+        transaction.set(surgeryRef, {
+          title: trimmedTitle,
+          titleLowercase,
+          category: trimmedCategory,
+          description: trimmedDescription,
+          sceneName: trimmedSceneName
+        });
+        transaction.set(titleIndexRef, {
+          surgeryId: surgeryRef.id,
+          title: trimmedTitle,
+          titleLowercase
+        });
       });
       setSuccess(true);
       setTitle('');
@@ -60,6 +83,10 @@ const AddSurgery = () => {
       setDescription('');
       setSceneName('');
     } catch (err) {
+      if (err?.message === 'DUPLICATE_SURGERY_TITLE') {
+        setError('A surgery with this name already exists. Please choose a different name.');
+        return;
+      }
       setError('Failed to add surgery. Please try again.');
       console.error(err);
     }
