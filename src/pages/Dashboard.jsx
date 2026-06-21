@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
+  const normalizeValue = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
   useEffect(() => {
     document.title = 'SurgiVerse - Dashboard';
@@ -34,7 +35,17 @@ const Dashboard = () => {
         // Merge surgeries with their corresponding attempts
         const mergedData = surgeryList.map(surgery => ({
           ...surgery,
-          attempts: attemptsList.filter(attempt => attempt.surgery_id === surgery.id)
+          attempts: attemptsList.filter(attempt => {
+            const attemptSurgeryId = attempt.surgery_id || attempt.surgeryId;
+            if (attemptSurgeryId === surgery.id) return true;
+
+            const attemptProcedureName = normalizeValue(attempt.procedureName);
+            const surgeryNames = [surgery.title, surgery.procedureName]
+              .map(normalizeValue)
+              .filter(Boolean);
+
+            return attemptProcedureName && surgeryNames.includes(attemptProcedureName);
+          })
         }));
 
         setSurgeriesWithAttempts(mergedData);

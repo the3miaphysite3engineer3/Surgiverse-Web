@@ -24,6 +24,7 @@ const SurgeryDetails = () => {
   const [selectedAttempt, setSelectedAttempt] = useState(null);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const { user } = useAuth();
+  const normalizeValue = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
 
   useEffect(() => {
     const fetchSurgeryDetails = async () => {
@@ -32,17 +33,32 @@ const SurgeryDetails = () => {
         const surgeryDoc = doc(db, 'surgeries', id);
         const surgerySnapshot = await getDoc(surgeryDoc);
 
+        let surgeryData = null;
         if (surgerySnapshot.exists()) {
-          setSurgery({ id: surgerySnapshot.id, ...surgerySnapshot.data() });
+          surgeryData = { id: surgerySnapshot.id, ...surgerySnapshot.data() };
+          setSurgery(surgeryData);
         } else {
           setError('Surgery not found.');
         }
 
-        if (user) {
+        if (user && surgeryData) {
           const attemptsCollection = collection(db, 'attempts');
-          const q = query(attemptsCollection, where('surgery_id', '==', id), where('uid', '==', user.uid));
+          const q = query(attemptsCollection, where('uid', '==', user.uid));
           const attemptsSnapshot = await getDocs(q);
-          const attemptsList = await Promise.all(attemptsSnapshot.docs.map(async d => {
+          const surgeryNames = [surgeryData.title, surgeryData.procedureName]
+            .map(normalizeValue)
+            .filter(Boolean);
+
+          const relevantAttemptDocs = attemptsSnapshot.docs.filter(d => {
+            const attemptData = d.data();
+            const attemptSurgeryId = attemptData.surgery_id || attemptData.surgeryId;
+            if (attemptSurgeryId === id) return true;
+
+            const attemptProcedureName = normalizeValue(attemptData.procedureName);
+            return attemptProcedureName && surgeryNames.includes(attemptProcedureName);
+          });
+
+          const attemptsList = await Promise.all(relevantAttemptDocs.map(async d => {
             const attemptData = { id: d.id, ...d.data() };
             let chatMessages = [];
             try {
