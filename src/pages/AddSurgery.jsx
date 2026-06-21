@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
@@ -23,11 +23,28 @@ const AddSurgery = () => {
     setSuccess(false);
 
     try {
+      const trimmedTitle = title.trim();
+      const trimmedCategory = category.trim();
+      const trimmedDescription = description.trim();
+      const trimmedSceneName = sceneName.trim();
+
+      const surgeriesSnapshot = await getDocs(collection(db, 'surgeries'));
+      const normalizedTitle = trimmedTitle.toLowerCase();
+      const surgeryAlreadyExists = surgeriesSnapshot.docs.some((docSnapshot) => {
+        const existingTitle = docSnapshot.data()?.title;
+        return typeof existingTitle === 'string' && existingTitle.trim().toLowerCase() === normalizedTitle;
+      });
+
+      if (surgeryAlreadyExists) {
+        setError('A surgery with this name already exists.');
+        return;
+      }
+
       await addDoc(collection(db, 'surgeries'), {
-        title,
-        category,
-        description,
-        sceneName
+        title: trimmedTitle,
+        category: trimmedCategory,
+        description: trimmedDescription,
+        sceneName: trimmedSceneName
       });
       setSuccess(true);
       setTitle('');
