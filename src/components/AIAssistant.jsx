@@ -19,6 +19,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { getAttemptLogs, getAttemptProcedureName } from '../utils/attemptFormat';
 
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -44,41 +45,74 @@ const AIAssistant = ({ attempt, onClose }) => {
     if (!messagesRef) return;
 
     const q = query(messagesRef, orderBy('createdAt'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => doc.data()));
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        setMessages(snapshot.docs.map(doc => doc.data()));
+      },
+      (err) => {
+        // The Firestore `Listen` stream fails with `unavailable` when offline
+        // (ERR_NAME_NOT_RESOLVED / ERR_NETWORK_CHANGED in the console).
+        // This is expected offline — don't crash, keep showing cached messages.
+        console.warn('Chat listener offline/unavailable:', err?.code || err?.message || err);
+      }
+    );
 
     return () => unsubscribe();
-  }, [attempt]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt?.id]);
 
   // Initial AI analysis (only once)
   useEffect(() => {
     if (!attempt || messages.length > 0) return;
 
+    const procedure = getAttemptProcedureName(attempt) || 'Unknown procedure';
+    const metricsJson = attempt.metrics ? JSON.stringify(attempt.metrics, null, 2) : 'No metrics recorded.';
+    const allLogs = getAttemptLogs(attempt);
+    const logsText = allLogs.length > 0
+      ? allLogs.slice(0, 30).join('\n')
+      : 'No logs recorded.';
+    const screenshotCount = Array.isArray(attempt.screenshots) ? attempt.screenshots.length : 0;
     const initialPrompt = `
 Analyze the following surgery attempt.
-Use clear markdown formatting.
+Use clear markdown formatting with sections: Summary, Strengths, Areas for Improvement, Concrete Next Steps.
 
-- **Surgeon:** ${attempt.surgeon}
-- **Procedure:** ${attempt.procedureName}
+- **Surgeon:** ${attempt.surgeon || attempt.uid || 'Unknown'}
+- **Procedure:** ${procedure}
 - **Outcome:** ${attempt.isSuccessful ? 'Successful' : 'Failed'}
+- **Score:** ${attempt.score ?? 'Not graded'}
+- **Completion time (s):** ${attempt.completionTimeSeconds ?? 'N/A'}
+- **Screenshots captured:** ${screenshotCount}
+- **Metrics:** \`\`\`json
+${metricsJson}
+\`\`\`
+- **Logs (first ${Math.min(allLogs.length, 30)}):**
+\`\`\`
+${logsText}
+\`\`\`
     `;
 
     sendToAI(initialPrompt);
   }, [attempt, messages]);
 
   const saveMessage = async (role, content, reasoning_details = null) => {
-    const messageDoc = {
-      role,
-      content,
-      createdAt: serverTimestamp()
-    };
+    try {
+      const messageDoc = {
+        role,
+        content,
+        createdAt: serverTimestamp()
+      };
 
-    if (reasoning_details !== null) {
-      messageDoc.reasoning_details = reasoning_details;
+      if (reasoning_details !== null) {
+        messageDoc.reasoning_details = reasoning_details;
+      }
+
+      await addDoc(messagesRef, messageDoc);
+    } catch (err) {
+      // Offline writes queue/reject — log instead of throwing an unhandled
+      // rejection ("Failed to get document because the client is offline").
+      console.warn('Failed to save chat message (offline?):', err?.code || err?.message || err);
     }
-
-    await addDoc(messagesRef, messageDoc);
   };
 
   const buildOpenRouterMessages = (historyMessages, prompt) => {

@@ -3,6 +3,8 @@ import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
+import { formatCompletionTime, formatAttemptDate, firestoreErrorMessage, getAttemptSurgeryId, getAttemptProcedureName, getAttemptLogs, formatMetricValue } from '../utils/attemptFormat';
+import AttemptScreenshots from '../components/AttemptScreenshots';
 import { Box, Typography, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Button, CircularProgress, Modal, Grid, Tabs, Tab, AppBar } from '@mui/material';
 
 const modalStyle = {
@@ -82,7 +84,7 @@ const GradeStudents = () => {
         setGrades(initialGrades);
 
       } catch (err) {
-        setError('Failed to fetch data.');
+        setError(firestoreErrorMessage(err));
         console.error(err);
       }
       setLoading(false);
@@ -125,9 +127,14 @@ const GradeStudents = () => {
     setTabValue(newValue);
   };
 
+  const getSurgeryTitle = (attempt) => {
+    const sid = getAttemptSurgeryId(attempt);
+    return surgeries[sid]?.title || getAttemptProcedureName(attempt) || 'N/A';
+  };
+
   const filteredAttempts = attempts.filter(attempt => {
     const studentName = `${users[attempt.uid]?.firstName || ''} ${users[attempt.uid]?.lastName || ''}`.toLowerCase();
-    const surgeryTitle = surgeries[attempt.surgery_id]?.title.toLowerCase() || '';
+    const surgeryTitle = getSurgeryTitle(attempt).toLowerCase();
     const query = searchQuery.toLowerCase();
     return studentName.includes(query) || surgeryTitle.includes(query);
   })
@@ -172,8 +179,8 @@ const GradeStudents = () => {
                 {filteredAttempts.map(attempt => (
                   <TableRow key={attempt.id} hover onClick={() => handleOpen(attempt)} style={{cursor: 'pointer'}}>
                     <TableCell>{users[attempt.uid]?.firstName || 'N/A'} {users[attempt.uid]?.lastName || ''}</TableCell>
-                    <TableCell>{surgeries[attempt.surgery_id]?.title || 'N/A'}</TableCell>
-                    <TableCell>{new Date(attempt.timestamp.seconds * 1000).toLocaleString()}</TableCell>
+                    <TableCell>{getSurgeryTitle(attempt)}</TableCell>
+                    <TableCell>{formatAttemptDate(attempt.timestamp)}</TableCell>
                     <TableCell>
                       <TextField
                         type="number"
@@ -220,6 +227,7 @@ const GradeStudents = () => {
                             <Tab label="Details" />
                             <Tab label="Metrics" />
                             <Tab label="Logs" />
+                            <Tab label={`Screenshots${selectedAttempt?.screenshots?.length ? ` (${selectedAttempt.screenshots.length})` : ''}`} />
                         </Tabs>
                     </AppBar>
                     <TabPanel value={tabValue} index={0}>
@@ -228,16 +236,25 @@ const GradeStudents = () => {
                           <Grid item xs={6}><Typography>{users[selectedAttempt.uid]?.firstName || 'N/A'} {users[selectedAttempt.uid]?.lastName || ''}</Typography></Grid>
                           
                           <Grid item xs={6}><Typography><strong>Surgery:</strong></Typography></Grid>
-                          <Grid item xs={6}><Typography>{surgeries[selectedAttempt.surgery_id]?.title || 'N/A'}</Typography></Grid>
+                          <Grid item xs={6}><Typography>{getSurgeryTitle(selectedAttempt)}</Typography></Grid>
+
+                          <Grid item xs={6}><Typography><strong>Procedure:</strong></Typography></Grid>
+                          <Grid item xs={6}><Typography>{getAttemptProcedureName(selectedAttempt) || 'N/A'}</Typography></Grid>
+
+                          <Grid item xs={6}><Typography><strong>Surgery ID:</strong></Typography></Grid>
+                          <Grid item xs={6}><Typography>{getAttemptSurgeryId(selectedAttempt) || 'N/A'}</Typography></Grid>
 
                           <Grid item xs={6}><Typography><strong>Date:</strong></Typography></Grid>
-                          <Grid item xs={6}><Typography>{new Date(selectedAttempt.timestamp.seconds * 1000).toLocaleString()}</Typography></Grid>
+                          <Grid item xs={6}><Typography>{formatAttemptDate(selectedAttempt.timestamp)}</Typography></Grid>
 
                           <Grid item xs={6}><Typography><strong>Score:</strong></Typography></Grid>
                           <Grid item xs={6}><Typography>{selectedAttempt.score ?? 'Not Graded'}</Typography></Grid>
 
                           <Grid item xs={6}><Typography><strong>Completion Time:</strong></Typography></Grid>
-                          <Grid item xs={6}><Typography>{selectedAttempt.completionTimeSeconds ? `${selectedAttempt.completionTimeSeconds} seconds` : 'N/A'}</Typography></Grid>
+                          <Grid item xs={6}><Typography>{formatCompletionTime(selectedAttempt.completionTimeSeconds)}</Typography></Grid>
+
+                          <Grid item xs={6}><Typography><strong>Successful:</strong></Typography></Grid>
+                          <Grid item xs={6}><Typography>{selectedAttempt.isSuccessful ? 'Yes' : 'No'}</Typography></Grid>
 
                           <Grid item xs={6}><Typography><strong>Errors:</strong></Typography></Grid>
                           <Grid item xs={6}><Typography>{selectedAttempt.errors?.join(', ') || 'None'}</Typography></Grid>
@@ -257,7 +274,7 @@ const GradeStudents = () => {
                                         {Object.entries(selectedAttempt.metrics).map(([key, value]) => (
                                             <TableRow key={key}>
                                                 <TableCell>{key}</TableCell>
-                                                <TableCell>{JSON.stringify(value)}</TableCell>
+                                                <TableCell>{formatMetricValue(value)}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -266,15 +283,18 @@ const GradeStudents = () => {
                         ) : <Typography sx={{mt: 2}}>No metrics available for this attempt.</Typography>}
                     </TabPanel>
                     <TabPanel value={tabValue} index={2}>
-                        {selectedAttempt.logs && selectedAttempt.logs.length > 0 ? (
+                        {getAttemptLogs(selectedAttempt).length > 0 ? (
                             <Paper sx={{mt: 2, p: 2, maxHeight: 400, overflow: 'auto', backgroundColor: '#f5f5f5'}}>
-                                {selectedAttempt.logs.map((log, index) => (
+                                {getAttemptLogs(selectedAttempt).map((log, index) => (
                                     <Typography key={index} component="pre" sx={{whiteSpace: 'pre-wrap', wordBreak: 'break-all'}}>
                                         {log}
                                     </Typography>
                                 ))}
                             </Paper>
                         ) : <Typography sx={{mt: 2}}>No logs available for this attempt.</Typography>}
+                    </TabPanel>
+                    <TabPanel value={tabValue} index={3}>
+                        <AttemptScreenshots screenshots={selectedAttempt.screenshots} />
                     </TabPanel>
                 </Box>
             </Modal>

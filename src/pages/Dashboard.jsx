@@ -5,10 +5,12 @@ import { db } from '../firebase';
 import { useAuth } from '../hooks/useAuth';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
+import { formatCompletionTime, formatAttemptDate, firestoreErrorMessage, getAttemptSurgeryId, getAttemptProcedureName } from '../utils/attemptFormat';
 import { Box, Container, Grid, Typography, Paper, CircularProgress, Button } from '@mui/material';
 
 const Dashboard = () => {
   const [surgeriesWithAttempts, setSurgeriesWithAttempts] = useState([]);
+  const [unmatchedAttempts, setUnmatchedAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
@@ -31,15 +33,24 @@ const Dashboard = () => {
           attemptsList = attemptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
 
-        // Merge surgeries with their corresponding attempts
+        // Merge surgeries with their corresponding attempts.
+        // Supports both legacy `surgery_id` and new Unity `surgeryID`.
+        const surgeryIds = new Set(surgeryList.map(s => s.id));
         const mergedData = surgeryList.map(surgery => ({
           ...surgery,
-          attempts: attemptsList.filter(attempt => attempt.surgery_id === surgery.id)
+          attempts: attemptsList.filter(attempt => getAttemptSurgeryId(attempt) === surgery.id)
         }));
+        // Attempts whose surgeryID matches no known surgery (e.g. new Unity
+        // procedure names) would otherwise disappear — surface them separately.
+        const orphaned = attemptsList.filter(attempt => {
+          const sid = getAttemptSurgeryId(attempt);
+          return !sid || !surgeryIds.has(sid);
+        });
 
         setSurgeriesWithAttempts(mergedData);
+        setUnmatchedAttempts(orphaned);
       } catch (err) {
-        setError('Failed to fetch data. Please try again later.');
+        setError(firestoreErrorMessage(err));
         console.error(err);
       } finally {
         setLoading(false);
@@ -85,7 +96,10 @@ const Dashboard = () => {
                       <ul style={{ paddingLeft: '20px', listStyle: 'decimal' }}>
                         {surgery.attempts.map((attempt) => (
                           <li key={attempt.id}>
-                            Score: {attempt.score}, Time: {attempt.completionTimeSeconds.toFixed(2)}s
+                            Score: {attempt.score ?? 'N/A'}, Time: {formatCompletionTime(attempt.completionTimeSeconds)}
+                            {attempt.isSuccessful !== undefined ? (attempt.isSuccessful ? ' ✓' : ' ✗') : ''}
+                            {getAttemptProcedureName(attempt) ? ` — ${getAttemptProcedureName(attempt)}` : ''}
+                            {Array.isArray(attempt.screenshots) && attempt.screenshots.length > 0 ? ` (${attempt.screenshots.length} 📷)` : ''}
                           </li>
                         ))}
                       </ul>
@@ -105,6 +119,26 @@ const Dashboard = () => {
               </Paper>
             </Grid>
           ))}
+          {user && unmatchedAttempts.length > 0 && (
+            <Grid item xs={12}>
+              <Paper elevation={3} sx={{ p: 3 }}>
+                <Typography variant="h5" component="h2">
+                  Other Recorded Attempts ({unmatchedAttempts.length})
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  These attempts reference a surgery ID with no matching surgery record — typically new Unity procedures.
+                </Typography>
+                <ul style={{ paddingLeft: '20px', listStyle: 'decimal' }}>
+                  {unmatchedAttempts.map((attempt) => (
+                    <li key={attempt.id}>
+                      {getAttemptProcedureName(attempt) || getAttemptSurgeryId(attempt) || attempt.id}
+                      {' '}— Score: {attempt.score ?? 'N/A'}, Time: {formatCompletionTime(attempt.completionTimeSeconds)}, Date: {formatAttemptDate(attempt.timestamp)}
+                    </li>
+                  ))}
+                </ul>
+              </Paper>
+            </Grid>
+          )}
         </Grid>
       </Container>
       <MarketingFooter />

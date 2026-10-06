@@ -3,6 +3,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
+import { completionTimeForSum, firestoreErrorMessage } from '../utils/attemptFormat';
 import { Box, Typography, Container, Paper, CircularProgress } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -27,7 +28,7 @@ const Analytics = () => {
         const attemptsData = attemptsCollection.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setAttempts(attemptsData);
       } catch (err) {
-        setError('Failed to fetch data.');
+        setError(firestoreErrorMessage(err));
         console.error(err);
       }
       setLoading(false);
@@ -49,8 +50,8 @@ const Analytics = () => {
         };
       }
       studentData[studentName].attempts += 1;
-      studentData[studentName].totalScore += attempt.score || 0;
-      studentData[studentName].totalTime += attempt.completionTimeSeconds || 0;
+      studentData[studentName].totalScore += Number(attempt.score) || 0;
+      studentData[studentName].totalTime += completionTimeForSum(attempt.completionTimeSeconds);
     });
 
     return Object.values(studentData).map(student => ({

@@ -11,6 +11,8 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
+import { formatCompletionTime, formatAttemptDate, compareAttemptsNewestFirst, firestoreErrorMessage, getAttemptSurgeryId, getAttemptScreenshots, getAttemptLogs, screenshotSrc, formatMetricValue, getAttemptProcedureName } from '../utils/attemptFormat';
+import AttemptScreenshots from '../components/AttemptScreenshots';
 import AIAssistant from '../components/AIAssistant';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -40,9 +42,16 @@ const SurgeryDetails = () => {
 
         if (user) {
           const attemptsCollection = collection(db, 'attempts');
-          const q = query(attemptsCollection, where('surgery_id', '==', id), where('uid', '==', user.uid));
-          const attemptsSnapshot = await getDocs(q);
-          const attemptsList = await Promise.all(attemptsSnapshot.docs.map(async d => {
+          // Legacy docs use `surgery_id`, new Unity client uses `surgeryID`.
+          // Query both and merge (dedupe by doc id) so neither shape is missed.
+          const qLegacy = query(attemptsCollection, where('surgery_id', '==', id), where('uid', '==', user.uid));
+          const qNew = query(attemptsCollection, where('surgeryID', '==', id), where('uid', '==', user.uid));
+          const [legacySnap, newSnap] = await Promise.all([getDocs(qLegacy), getDocs(qNew)]);
+          const seen = new Map();
+          [...legacySnap.docs, ...newSnap.docs].forEach(d => {
+            if (!seen.has(d.id)) seen.set(d.id, d);
+          });
+          const attemptsList = await Promise.all([...seen.values()].map(async d => {
             const attemptData = { id: d.id, ...d.data() };
             let chatMessages = [];
             try {
@@ -61,7 +70,7 @@ const SurgeryDetails = () => {
           setAttempts(attemptsList);
         }
       } catch (err) {
-        setError('Failed to fetch surgery details. Please try again later.');
+        setError(firestoreErrorMessage(err));
         console.error(err);
       } finally {
         setLoading(false);
@@ -194,13 +203,13 @@ const SurgeryDetails = () => {
             {user ? (
               attempts.length > 0 ? (
                 <Box>
-                  {attempts.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds).map((attempt, index) => (
+                  {[...attempts].sort(compareAttemptsNewestFirst).map((attempt, index) => (
                     <React.Fragment key={attempt.id}>
                       <Accordion sx={{ mb: 1 }}>
                           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                               <ListItemText 
                                   primary={`Attempt #${attempts.length - index}`}
-                                  secondary={`Date: ${new Date(attempt.timestamp.seconds * 1000).toLocaleString()} | Score: ${attempt.score} | Time: ${attempt.completionTimeSeconds ? attempt.completionTimeSeconds.toFixed(2) : 'N/A'}s | Successful: ${attempt.isSuccessful ? 'Yes' : 'No'}`}
+                                  secondary={`Date: ${formatAttemptDate(attempt.timestamp)} | Score: ${attempt.score ?? 'N/A'} | Time: ${formatCompletionTime(attempt.completionTimeSeconds)} | Successful: ${attempt.isSuccessful ? 'Yes' : 'No'}`}
                               />
                               <Button variant="outlined" size="small" onClick={(e) => {e.stopPropagation(); handleOpenAIAssistant(attempt);}} sx={{ ml: 2 }}>
                                   Discuss with AI
@@ -210,10 +219,24 @@ const SurgeryDetails = () => {
                               </Button>
                           </AccordionSummary>
                           <AccordionDetails>
+                              <Box sx={{ mb: 2 }}>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                  Procedure: {getAttemptProcedureName(attempt) || surgery.title} | SurgeryID: {getAttemptSurgeryId(attempt) || 'N/A'}
+                                </Typography>
+                                {attempt.metrics && (
+                                  <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                    {Object.entries(attempt.metrics).map(([k, v]) => (
+                                      <Typography key={k} variant="caption" sx={{ bgcolor: '#f0f2f5', px: 1, py: 0.5, borderRadius: 1 }}>
+                                        <strong>{k}:</strong> {formatMetricValue(v)}
+                                      </Typography>
+                                    ))}
+                                  </Box>
+                                )}
+                              </Box>
                               <Typography variant="h6" sx={{ mb: 1 }}>Attempt Logs</Typography>
                               <List dense>
-                                  {attempt.logs && attempt.logs.length > 0 ? (
-                                      attempt.logs.map((log, logIndex) => (
+                                  {getAttemptLogs(attempt).length > 0 ? (
+                                      getAttemptLogs(attempt).map((log, logIndex) => (
                                           <ListItem key={logIndex}>
                                               <ListItemText primary={log} />
                                           </ListItem>
@@ -222,6 +245,10 @@ const SurgeryDetails = () => {
                                       <Typography>No logs available for this attempt.</Typography>
                                   )}
                               </List>
+                              <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+                                Screenshots ({getAttemptScreenshots(attempt).length})
+                              </Typography>
+                              <AttemptScreenshots screenshots={attempt.screenshots} />
                           </AccordionDetails>
                       </Accordion>
                       <div id={`pdf-report-${attempt.id}`} style={{ position: 'absolute', top: '-10000px', left: '-10000px', zIndex: -1, background: '#fff', color: '#000', width: '210mm', minHeight: '297mm', padding: 20 }}>
@@ -237,12 +264,14 @@ const SurgeryDetails = () => {
                               <p style={{ margin: 0 }}><strong>Name:</strong> {surgery.professorName || 'N/A'}</p>
                           </div>
 
-                          <h2 style={{ color: '#555', borderTop: '1px solid #eee', paddingTop: 10 }}>Attempt on {new Date(attempt.timestamp.seconds * 1000).toLocaleString()}</h2>
-                          
+                          <h2 style={{ color: '#555', borderTop: '1px solid #eee', paddingTop: 10 }}>Attempt on {formatAttemptDate(attempt.timestamp)}</h2>
+                          <p style={{ margin: 0 }}><strong>Procedure:</strong> {getAttemptProcedureName(attempt) || surgery.title}</p>
+                          <p style={{ margin: 0 }}><strong>SurgeryID:</strong> {getAttemptSurgeryId(attempt) || attempt.id}</p>
+
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, margin: '20px 0' }}>
                               <div>
-                                  <p><strong>Score:</strong> {attempt.score}</p>
-                                  <p><strong>Completion Time:</strong> {attempt.completionTimeSeconds ? attempt.completionTimeSeconds.toFixed(2) : 'N/A'}s</p>
+                                  <p><strong>Score:</strong> {attempt.score ?? 'N/A'}</p>
+                                  <p><strong>Completion Time:</strong> {formatCompletionTime(attempt.completionTimeSeconds)}</p>
                               </div>
                               <div>
                                   <p><strong>Successful:</strong> {attempt.isSuccessful ? 'Yes' : 'No'}</p>
@@ -250,13 +279,34 @@ const SurgeryDetails = () => {
                               </div>
                           </div>
 
+                          {attempt.metrics && (
+                            <div style={{ margin: '10px 0' }}>
+                              <h3>Metrics</h3>
+                              {Object.entries(attempt.metrics).map(([k, v]) => (
+                                <p key={k} style={{ margin: 0, fontSize: '11px' }}><strong>{k}:</strong> {formatMetricValue(v)}</p>
+                              ))}
+                            </div>
+                          )}
+
                           <h3>Evaluation:</h3>
                           <p>{attempt.evaluation || "No specific evaluation feedback was provided for this attempt."}</p>
 
+                          {getAttemptScreenshots(attempt).length > 0 && (
+                            <div style={{ marginTop: 20, borderTop: '1px solid #ccc', paddingTop: 10 }}>
+                              <h3>Screenshots ({getAttemptScreenshots(attempt).length})</h3>
+                              {getAttemptScreenshots(attempt).map((shot, sIdx) => (
+                                <div key={sIdx} style={{ marginBottom: 10 }}>
+                                  <img src={screenshotSrc(shot)} alt={`screenshot ${sIdx + 1}`} style={{ width: '100%' }} />
+                                  <p style={{ margin: 0, fontSize: '10px' }}>{shot.source || 'REFERENCE'} — {formatAttemptDate(shot.timestamp)}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
                           <h3 style={{ marginTop: 20, borderTop: '1px solid #ccc', paddingTop: 10 }}>Detailed Logs</h3>
                           <div style={{ height: 'auto', border: '1px solid #eee', padding: 10, borderRadius: 5, background: '#f9f9f9' }}>
-                              {attempt.logs && attempt.logs.length > 0 ? (
-                                  attempt.logs.map((log, logIndex) => (
+                              {getAttemptLogs(attempt).length > 0 ? (
+                                  getAttemptLogs(attempt).map((log, logIndex) => (
                                       <p key={logIndex} style={{ margin: 0, padding: 2, fontSize: '10px' }}>{log}</p>
                                   ))
                               ) : (
