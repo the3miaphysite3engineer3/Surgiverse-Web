@@ -7,6 +7,7 @@ import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import { formatCompletionTime, formatAttemptDate, firestoreErrorMessage, getAttemptSurgeryId, getAttemptProcedureName } from '../utils/attemptFormat';
 import { Box, Container, Grid, Typography, Paper, CircularProgress, Button } from '@mui/material';
+import { normalizeValue } from '../utils/normalizeValue';
 
 const Dashboard = () => {
   const [surgeriesWithAttempts, setSurgeriesWithAttempts] = useState([]);
@@ -34,17 +35,30 @@ const Dashboard = () => {
         }
 
         // Merge surgeries with their corresponding attempts.
-        // Supports both legacy `surgery_id` and new Unity `surgeryID`.
-        const surgeryIds = new Set(surgeryList.map(s => s.id));
-        const mergedData = surgeryList.map(surgery => ({
-          ...surgery,
-          attempts: attemptsList.filter(attempt => getAttemptSurgeryId(attempt) === surgery.id)
-        }));
-        // Attempts whose surgeryID matches no known surgery (e.g. new Unity
-        // procedure names) would otherwise disappear — surface them separately.
+        // Supports legacy/new surgery id fields and procedure-name matching.
+        const matchedAttemptIds = new Set();
+        const mergedData = surgeryList.map(surgery => {
+          const surgeryNames = new Set([surgery.title, surgery.procedureName]
+            .map(normalizeValue)
+            .filter(Boolean));
+
+          return {
+            ...surgery,
+            attempts: attemptsList.filter(attempt => {
+              const attemptSurgeryId = getAttemptSurgeryId(attempt);
+              const attemptProcedureName = normalizeValue(attempt.procedureName);
+              const isMatch =
+                attemptSurgeryId === surgery.id ||
+                (attemptProcedureName && surgeryNames.has(attemptProcedureName));
+
+              if (isMatch) matchedAttemptIds.add(attempt.id);
+              return isMatch;
+            })
+          };
+        });
+        // Attempts that match no known surgery are surfaced separately.
         const orphaned = attemptsList.filter(attempt => {
-          const sid = getAttemptSurgeryId(attempt);
-          return !sid || !surgeryIds.has(sid);
+          return !matchedAttemptIds.has(attempt.id);
         });
 
         setSurgeriesWithAttempts(mergedData);

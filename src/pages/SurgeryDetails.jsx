@@ -16,6 +16,9 @@ import AttemptScreenshots from '../components/AttemptScreenshots';
 import AIAssistant from '../components/AIAssistant';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { normalizeValue } from '../utils/normalizeValue';
+
+const FIRESTORE_IN_QUERY_LIMIT = 30;
 
 const SurgeryDetails = () => {
   const { id } = useParams();
@@ -34,24 +37,78 @@ const SurgeryDetails = () => {
         const surgeryDoc = doc(db, 'surgeries', id);
         const surgerySnapshot = await getDoc(surgeryDoc);
 
+        let surgeryData = null;
         if (surgerySnapshot.exists()) {
-          setSurgery({ id: surgerySnapshot.id, ...surgerySnapshot.data() });
+          surgeryData = { id: surgerySnapshot.id, ...surgerySnapshot.data() };
+          setSurgery(surgeryData);
         } else {
           setError('Surgery not found.');
         }
 
-        if (user) {
+        if (user && surgeryData) {
           const attemptsCollection = collection(db, 'attempts');
-          // Legacy docs use `surgery_id`, new Unity client uses `surgeryID`.
-          // Query both and merge (dedupe by doc id) so neither shape is missed.
-          const qLegacy = query(attemptsCollection, where('surgery_id', '==', id), where('uid', '==', user.uid));
-          const qNew = query(attemptsCollection, where('surgeryID', '==', id), where('uid', '==', user.uid));
-          const [legacySnap, newSnap] = await Promise.all([getDocs(qLegacy), getDocs(qNew)]);
-          const seen = new Map();
-          [...legacySnap.docs, ...newSnap.docs].forEach(d => {
-            if (!seen.has(d.id)) seen.set(d.id, d);
-          });
-          const attemptsList = await Promise.all([...seen.values()].map(async d => {
+          // Legacy docs use `surgery_id`, newer clients may use `surgeryID`/`surgeryId`.
+          const attemptsByLegacyIdQuery = query(
+            attemptsCollection,
+            where('uid', '==', user.uid),
+            where('surgery_id', '==', id)
+          );
+          const attemptsByNewIdQuery = query(
+            attemptsCollection,
+            where('uid', '==', user.uid),
+            where('surgeryID', '==', id)
+          );
+          const [attemptsByLegacyIdSnapshot, attemptsByNewIdSnapshot] = await Promise.all([
+            getDocs(attemptsByLegacyIdQuery),
+            getDocs(attemptsByNewIdQuery)
+          ]);
+
+          const surgeryNames = [surgeryData.title, surgeryData.procedureName]
+            .filter((name) => typeof name === 'string')
+            .map((name) => name.trim())
+            .filter(Boolean);
+          const surgeryNamesSet = new Set(surgeryNames);
+          const normalizedSurgeryNamesSet = new Set(Array.from(surgeryNamesSet).map(normalizeValue).filter(Boolean));
+
+          let attemptsByProcedureNameDocs = [];
+          if (surgeryNamesSet.size > 0) {
+            const surgeryNameBatches = [];
+            const surgeryNamesList = Array.from(surgeryNamesSet);
+            for (let i = 0; i < surgeryNamesList.length; i += FIRESTORE_IN_QUERY_LIMIT) {
+              surgeryNameBatches.push(surgeryNamesList.slice(i, i + FIRESTORE_IN_QUERY_LIMIT));
+            }
+
+            const procedureNameSnapshots = await Promise.all(
+              surgeryNameBatches.map((batch) =>
+                getDocs(
+                  query(
+                    attemptsCollection,
+                    where('uid', '==', user.uid),
+                    where('procedureName', 'in', batch)
+                  )
+                )
+              )
+            );
+
+            attemptsByProcedureNameDocs = procedureNameSnapshots.flatMap((snapshot) => snapshot.docs);
+          }
+
+          const relevantAttemptDocsById = new Map();
+          const addIfRelevant = (d) => {
+            const attemptData = d.data();
+            const attemptSurgeryId = attemptData.surgery_id || attemptData.surgeryID || attemptData.surgeryId;
+            const normalizedProcedureName = normalizeValue(attemptData.procedureName);
+
+            if (attemptSurgeryId === id || (normalizedProcedureName && normalizedSurgeryNamesSet.has(normalizedProcedureName))) {
+              relevantAttemptDocsById.set(d.id, d);
+            }
+          };
+
+          attemptsByLegacyIdSnapshot.docs.forEach(addIfRelevant);
+          attemptsByNewIdSnapshot.docs.forEach(addIfRelevant);
+          attemptsByProcedureNameDocs.forEach(addIfRelevant);
+
+          const attemptsList = await Promise.all(Array.from(relevantAttemptDocsById.values()).map(async d => {
             const attemptData = { id: d.id, ...d.data() };
             let chatMessages = [];
             try {
