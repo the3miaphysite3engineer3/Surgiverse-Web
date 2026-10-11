@@ -61,6 +61,7 @@ const MarketingNavbar = () => {
                 <span className={location.pathname === '/' ? "nav-link active" : "nav-link"} onClick={() => { navigate('/'); closeMenu(); }}>Home</span>
                 <span className={location.pathname === '/about' ? "nav-link active" : "nav-link"} onClick={() => { navigate('/about'); closeMenu(); }}>About</span>
                 <span className={location.pathname === '/contact' ? "nav-link active" : "nav-link"} onClick={() => { navigate('/contact'); closeMenu(); }}>Contact</span>
+                <span className={location.pathname === '/privacy' ? "nav-link active" : "nav-link"} onClick={() => { navigate('/privacy'); closeMenu(); }}>Privacy</span>
             </>
         );
     }

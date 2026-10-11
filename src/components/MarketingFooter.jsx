@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -9,6 +10,11 @@ const MarketingFooter = () => {
     <footer className="marketing-footer">
       <div className="footer-content">
         <div className="footer-logo">SURGIVERSE</div>
+        <div className="footer-links">
+          <Link to="/about">About</Link>
+          <Link to="/contact">Contact</Link>
+          <Link to="/privacy">Privacy Policy</Link>
+        </div>
         <div className="footer-social">
           <a href="https://www.instagram.com/surgi__verse/" target="_blank" rel="noopener noreferrer">
             <InstagramIcon fontSize="large" />

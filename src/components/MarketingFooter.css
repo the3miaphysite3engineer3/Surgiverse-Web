@@ -52,6 +52,24 @@
   letter-spacing: 1.5px;
 }
 
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.footer-links a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: #00e5ff;
+}
+
 @media (max-width: 768px) {
   .footer-content {
     flex-direction: column;
