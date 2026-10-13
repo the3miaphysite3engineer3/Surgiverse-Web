@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:models": "node scripts/seed-ai-models.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
@@ -33,6 +34,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
+    "firebase-admin": "^14.5.0",
     "globals": "^16.5.0",
     "vite": "^5.3.3"
   }

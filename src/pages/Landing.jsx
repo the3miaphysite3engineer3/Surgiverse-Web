@@ -91,6 +91,32 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* SurgiVideoRAG Spotlight */}
+      <section className="rag-section">
+        <div className="rag-panel">
+          <span className="rag-eyebrow">New · AI Video Intelligence</span>
+          <h2 className="rag-title">SurgiVideoRAG</h2>
+          <p className="rag-subtitle">
+            Ask questions about real surgical videos and get answers grounded in
+            operative footage — visually-aligned retrieval over Cholec80,
+            CholecT45&nbsp;/&nbsp;SSG-QA, workflow and ENT corpora.
+          </p>
+          <div className="rag-stats">
+            <div className="rag-stat"><strong>179</strong><span>surgical videos</span></div>
+            <div className="rag-stat"><strong>~5K</strong><span>indexed clips</span></div>
+            <div className="rag-stat"><strong>Q&amp;A</strong><span>grounded in video</span></div>
+          </div>
+          <a
+            className="primary-btn glow rag-cta"
+            href="https://surgvideorag-web.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Launch SurgiVideoRAG
+          </a>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="cta-section">
         <div className="cta-content">

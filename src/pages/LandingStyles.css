@@ -202,6 +202,90 @@
   line-height: 1.6;
 }
 
+/* SurgiVideoRAG Spotlight */
+.rag-section {
+  padding: 6rem 5%;
+  display: flex;
+  justify-content: center;
+  background: var(--bg-dark);
+}
+
+.rag-panel {
+  max-width: 1000px;
+  width: 100%;
+  text-align: center;
+  padding: 4rem 3rem;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.15), transparent 60%),
+    linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(2, 6, 23, 0.95));
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 229, 255, 0.08);
+}
+
+.rag-eyebrow {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--primary);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 999px;
+  padding: 0.4rem 1.2rem;
+  margin-bottom: 1.5rem;
+  background: rgba(0, 229, 255, 0.06);
+}
+
+.rag-title {
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 800;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(to right, #ffffff, #00e5ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.rag-subtitle {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto 2.5rem;
+}
+
+.rag-stats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.rag-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rag-stat strong {
+  font-size: 2.2rem;
+  color: #fff;
+}
+
+.rag-stat span {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.rag-cta {
+  display: inline-block;
+  text-decoration: none;
+  font-size: 1.3rem;
+  padding: 1.2rem 3rem;
+}
+
 /* CTA Section */
 .cta-section {
   padding: 8rem 5%;

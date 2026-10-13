@@ -18,22 +18,37 @@ import {
   onSnapshot,
   serverTimestamp
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { auth, db } from '../firebase';
 import { getAttemptLogs, getAttemptProcedureName } from '../utils/attemptFormat';
+import { fetchActiveModels, defaultModel, formatPriceEGP } from '../utils/aiModels';
 
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
+// Optional server proxy (recommended): POST { attemptId, messages } → { content }.
+// The proxy holds the real keys (OpenRouter and/or SovereignEG) server-side,
+// so no AI key ships in the browser bundle. See next-migration/app/api/ai-chat.
+const AI_PROXY_URL = import.meta.env.VITE_AI_PROXY_URL;
 
 const AIAssistant = ({ attempt, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [models, setModels] = useState([]);
+  const [modelId, setModelId] = useState('');
   const chatEndRef = useRef(null);
 
   const messagesRef = attempt
     ? collection(db, 'attemptChats', attempt.id, 'messages')
     : null;
+
+  // Model catalog from Firestore (`ai_models`, seeded from SovereignEG).
+  useEffect(() => {
+    fetchActiveModels().then((list) => {
+      setModels(list);
+      setModelId((prev) => prev || defaultModel(list)?.modelId || '');
+    });
+  }, []);
 
   // Auto-scroll
   useEffect(() => {
@@ -140,6 +155,37 @@ ${logsText}
   const sendToAI = async (prompt) => {
     setLoading(true);
 
+    // Server-proxy path: keys (OpenRouter / SovereignEG) stay server-side.
+    // The proxy verifies the Firebase ID token, calls the provider, and
+    // persists the reply — the onSnapshot listener above renders it.
+    if (AI_PROXY_URL) {
+      try {
+        const idToken = await auth.currentUser?.getIdToken().catch(() => null);
+        const response = await fetch(AI_PROXY_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+          },
+          body: JSON.stringify({
+            attemptId: attempt?.id,
+            messages: buildOpenRouterMessages(messages, prompt),
+            model: modelId || undefined,
+          }),
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(result?.error || `AI proxy failed: ${response.status}`);
+        }
+      } catch (err) {
+        console.error(err);
+        await saveMessage('ai', `⚠️ Error generating response: ${err.message || err}`);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     if (!OPENROUTER_API_KEY) {
       console.error('Missing VITE_OPENROUTER API key.');
       await saveMessage('ai', '⚠️ OpenRouter API key is missing.');
@@ -155,7 +201,7 @@ ${logsText}
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: OPENROUTER_MODEL,
+          model: modelId || OPENROUTER_MODEL,
           reasoning: { enabled: true },
           messages: buildOpenRouterMessages(messages, prompt)
         })
@@ -212,12 +258,35 @@ ${logsText}
   return (
     <Paper sx={{ p: 2, height: '70vh', width: '500px', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6">AI Assistant</Typography>
         <IconButton onClick={onClose}>
           <CloseIcon />
         </IconButton>
       </Box>
+
+      {/* Model picker (Firestore `ai_models` catalog with EGP pricing) */}
+      <TextField
+        select
+        fullWidth
+        size="small"
+        label="Model"
+        value={modelId}
+        onChange={(e) => setModelId(e.target.value)}
+        sx={{ mt: 1, mb: 1 }}
+        SelectProps={{ native: true }}
+        helperText={
+          models.find((m) => m.modelId === modelId)
+            ? `In: ${formatPriceEGP(models.find((m) => m.modelId === modelId).inputPerMTokensEGP)} · Out: ${formatPriceEGP(models.find((m) => m.modelId === modelId).outputPerMTokensEGP)}`
+            : 'Loading model catalog…'
+        }
+      >
+        {models.map((m) => (
+          <option key={m.modelId} value={m.modelId}>
+            {m.name}
+          </option>
+        ))}
+      </TextField>
 
       {/* Chat */}
       <Box

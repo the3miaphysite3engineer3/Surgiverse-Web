@@ -28,3 +28,12 @@ dist-ssr
 .env*
 !.env.example
 
+.vercel
+
+# Firebase Admin service-account keys — NEVER commit these.
+serviceAccount.json
+*service-account*.json
+*-firebase-adminsdk-*.json
+
+# Brand source material (73MB+ of raw screenshots; used copies live in public/).
+logos/

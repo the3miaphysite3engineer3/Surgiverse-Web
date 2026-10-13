@@ -1,0 +1,177 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ──────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function callerRole() {
+      return isSignedIn()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+
+    function isProfessor() {
+      return isSignedIn() && callerRole() == 'professor';
+    }
+
+    function isTAOrProfessor() {
+      return isSignedIn() && (callerRole() in ['TA', 'professor']);
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ─── users ────────────────────────────────────────────────
+    // Shape: { uid, firstName, lastName, email, role: student|TA|professor }
+    match /users/{userId} {
+      // Staff can list/browse; anyone signed in can read own doc.
+      // (get() for single doc, list for collection queries.)
+      allow get: if isOwner(userId) || isTAOrProfessor();
+      allow list: if isTAOrProfessor();
+
+      // Self-signup: user creates ONLY their own doc, forced to student.
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.role == 'student'
+        && request.resource.data.keys().hasAll(['uid', 'firstName', 'lastName', 'email', 'role']);
+
+      // Self edit: firstName/lastName only — never role/email/uid.
+      allow update: if isOwner(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.role == resource.data.role;
+
+      // Professor can change role only (no self-demotion lock here;
+      // do that in app logic if desired).
+      allow update: if isProfessor()
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.firstName == resource.data.firstName
+        && request.resource.data.lastName == resource.data.lastName
+        && request.resource.data.role in ['student', 'TA', 'professor'];
+
+      allow delete: if false;
+    }
+
+    // ─── surgeries ────────────────────────────────────────────
+    // Professor-curated catalogue. All signed-in users can read.
+    match /surgeries/{surgeryId} {
+      allow get, list: if isSignedIn();
+      allow create: if isProfessor()
+        && request.resource.data.keys().hasAll(['title', 'category', 'description', 'sceneName']);
+      allow update, delete: if isProfessor();
+    }
+
+    // ─── attempts ─────────────────────────────────────────────
+    // Shape includes: uid, surgery_id|surgeryID|surgeryId, procedureName,
+    // metrics, logs, screenshots, score, timestamp, completionTimeSeconds, isSuccessful
+    match /attempts/{attemptId} {
+      // Owner reads own; staff read all.
+      allow get: if isSignedIn()
+        && (resource.data.uid == request.auth.uid || isTAOrProfessor());
+      // Collection queries must be scoped: students query where uid == self;
+      // staff (TA/professor) may list everything (GradeStudents/Analytics).
+      // NOTE: Firestore rules have no request.query — instead we constrain
+      // on resource.data.uid, which forces client queries to filter
+      // where('uid', '==', request.auth.uid) or be rejected.
+      allow list: if isTAOrProfessor()
+        || (isSignedIn() && resource.data.uid == request.auth.uid);
+
+      // Students (or game clients with the student's token) create own attempts.
+      // Score/grade can NEVER be set at creation.
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && !('score' in request.resource.data);
+
+      // Nobody overwrites another student's attempt body. Owner may not
+      // touch score; staff may only touch score (+ evaluation/feedback).
+      allow update: if isTAOrProfessor()
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['score', 'evaluation', 'feedback', 'gradedBy', 'gradedAt']);
+      allow update: if isOwner(resource.data.uid)
+        && request.resource.data.uid == resource.data.uid
+        && !('score' in request.resource.data.diff(resource.data).changedKeys())
+        && !('evaluation' in request.resource.data.diff(resource.data).changedKeys());
+
+      allow delete: if false;
+    }
+
+    // ─── attemptChats (AI chat per attempt) ───────────────────
+    match /attemptChats/{attemptId} {
+      // Parent shell doc (if it exists) follows same visibility as the attempt.
+      function attemptOwner() {
+        return get(/databases/$(database)/documents/attempts/$(attemptId)).data.uid;
+      }
+      allow get, list: if isSignedIn()
+        && (attemptOwner() == request.auth.uid || isTAOrProfessor());
+
+      match /messages/{messageId} {
+        allow get, list: if isSignedIn()
+          && (get(/databases/$(database)/documents/attempts/$(attemptId)).data.uid == request.auth.uid
+            || isTAOrProfessor());
+        // Owner or staff may append; validate minimal shape.
+        allow create: if isSignedIn()
+          && (get(/databases/$(database)/documents/attempts/$(attemptId)).data.uid == request.auth.uid
+            || isTAOrProfessor())
+          && request.resource.data.role in ['user', 'ai', 'assistant', 'system']
+          && request.resource.data.keys().hasAll(['role', 'content', 'createdAt']);
+        allow update, delete: if false;
+      }
+    }
+
+    // ─── ai_models (SovereignEG catalog: ids + EGP prices) ──────
+    // Seeded via scripts/seed-ai-models.mjs. All signed-in users read;
+    // only professors curate (active flag, prices).
+    match /ai_models/{modelId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isProfessor();
+    }
+
+    // ─── ai_resources / refVideos (professor-curated) ─────────
+    match /ai_resources/{docId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isProfessor();
+    }
+
+    match /refVideos/{docId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isProfessor();
+    }
+
+    // ─── config ───────────────────────────────────────────────
+    // config/global = professor-managed game defaults (GameSettings.jsx).
+    // config/{autoId} with field uid = per-student Unity settings (Profile.jsx).
+    match /config/global {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow write: if isProfessor();
+    }
+
+    match /config/{configId} {
+      allow get: if isSignedIn()
+        && (resource.data.uid == request.auth.uid || isTAOrProfessor());
+      // Profile.jsx queries where('uid', '==', self): allowed via the
+      // resource.data.uid constraint below. Staff may list all.
+      allow list: if isTAOrProfessor()
+        || (isSignedIn() && resource.data.uid == request.auth.uid);
+      // Owner creates/updates only their own settings doc.
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && configId != 'global';
+      allow update: if isSignedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && configId != 'global';
+      allow delete: if false;
+    }
+
+    // ─── Default deny ─────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

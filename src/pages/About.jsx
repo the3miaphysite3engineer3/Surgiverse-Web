@@ -14,6 +14,42 @@ const About = () => {
     { name: "Kirolos Sedra", role: "Software Architect", bio: "Guiding software architecture, mentoring team members, code review excellence", image: "/team/sedra.png" }
   ];
 
+  const advisors = [
+    {
+      name: "Dr. Tamer El Nady",
+      role: "Principal Investigator, DSDC · Professor of Acoustics, Ain Shams University",
+      bio: "Leads the Dynamic & Digitization Systems Cluster — grown from the Acoustics & Vibrations Lab (2005) into labs spanning Sound/Vibration/Smart Structures, Product Design, Virtual Reality, Digital Learning, and Energy & Climate Change. Oversees the VR Lab behind SurgiVerse.",
+      image: "/team/tamer.jpg",
+    },
+    {
+      name: "Dr. Nesma Rezk",
+      role: "Assistant Professor, Computer & Systems Engineering, Ain Shams University",
+      bio: "PhD, Computer Science & Engineering, Halmstad University, Sweden (2022) — “Deep Learning on the Edge.” Research: embedded systems, deep learning, domain-specific architectures, multi-objective optimization.",
+      image: "/team/nesma.jpg",
+    },
+    {
+      name: "Dr. Anas Askoura",
+      role: "Professor of Otorhinolaryngology, Head & Neck Surgery, Ain Shams University",
+      bio: "MS, MRCS, MD ENT. Clinical advisor for ENT domain validation, including the ENT knowledge graph.",
+      image: "/team/anas.jpg",
+    },
+  ];
+
+  const partners = [
+    {
+      name: "DSDC · Virtual Reality Lab",
+      logo: "/partners/dsdc.png",
+      url: "https://dsdc.eng.asu.edu.eg/research-labs/3",
+      desc: "With the aid of VR Lab of the Dynamic Systems & Digitalisation Cluster, Faculty of Engineering, Ain Shams University.",
+    },
+    {
+      name: "iHub · Ain Shams University",
+      logo: "/partners/ihub.png",
+      url: "https://www.asu.edu.eg/ihub/",
+      desc: "iHub — the university's innovation hub — helped SurgiVerse become SurgiVerse.",
+    },
+  ];
+
   return (
     <div className="about-container">
       <MarketingNavbar />
@@ -53,6 +89,50 @@ const About = () => {
               <p className="team-role">{member.role}</p>
               <p className="team-bio">{member.bio}</p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Advisors Section */}
+      <section className="team-section">
+        <h2>Advisors & Principal Investigators</h2>
+        <div className="team-grid advisors-grid">
+          {advisors.map((member, idx) => (
+            <div key={idx} className="team-card glass-card">
+              <div className="team-avatar advisor-avatar">
+                {member.image ? (
+                  <img src={member.image} alt={member.name} className="team-avatar-img" />
+                ) : (
+                  <span>{member.name.split(' ').map(n => n[0]).join('')}</span>
+                )}
+              </div>
+              <h3>{member.name}</h3>
+              <p className="team-role">{member.role}</p>
+              <p className="team-bio">{member.bio}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Partners Section */}
+      <section className="partners-section">
+        <h2>Our Main Sponsors</h2>
+        <div className="partners-grid">
+          {partners.map((partner, idx) => (
+            <a
+              key={idx}
+              className="partner-card glass-card"
+              href={partner.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <div className="partner-logo">
+                <img src={partner.logo} alt={partner.name} />
+              </div>
+              <h3>{partner.name}</h3>
+              <p>{partner.desc}</p>
+              <span className="partner-link">Visit →</span>
+            </a>
           ))}
         </div>
       </section>

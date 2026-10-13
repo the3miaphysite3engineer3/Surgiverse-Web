@@ -1,0 +1,10 @@
+# Excluded from Vercel uploads (keeps deployments small).
+# Brand source files — the used copies live in public/logo.png,
+# public/favicon.png and public/hero.png.
+logos/
+# Local-only scaffolding / tooling, not needed at runtime.
+next-migration/
+scripts/
+worker/
+.idx/
+.vscode/
