@@ -68,7 +68,7 @@ const About = () => {
         <div className="mission-content glass-card">
           <h2>Our Mission</h2>
           <p>
-            To become the global standard for surgical simulation — replacing cadaveric labs, democratizing training access, and feeding the next generation of autonomous surgical AI. Every simulation run on our platform translates directly into safer real-world procedures.
+            To become the future standard for surgical simulation — replacing cadaveric labs, democratizing training access, and feeding the next generation of autonomous surgical AI. Every simulation run on our platform translates directly into safer real-world procedures.
           </p>
         </div>
       </section>

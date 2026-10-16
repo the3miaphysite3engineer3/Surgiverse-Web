@@ -52,7 +52,7 @@ const Landing = () => {
       <header className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
-            The Global Standard for <span className="highlight">Surgical Simulation</span>
+            The Future Standard for <span className="highlight">Surgical Simulation</span>
           </h1>
           <p className="hero-subtitle">
             Replacing cadaveric labs, democratizing training access, and feeding the next generation of autonomous surgical AI.
