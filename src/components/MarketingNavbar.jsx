@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { META_QUEST_URL, MetaQuestLogo } from './MetaLogos';
 import './MarketingNavbar.css';
 
 const MarketingNavbar = () => {
@@ -109,6 +110,15 @@ const MarketingNavbar = () => {
       </div>
 
       <div className="nav-actions desktop-only">
+        <a
+          className="nav-quest-btn"
+          href={META_QUEST_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <MetaQuestLogo size={18} />
+          <span>Meta Quest</span>
+        </a>
         {user ? (
           <button className="nav-login-btn logout" onClick={handleLogout}>
             Logout
@@ -132,6 +142,17 @@ const MarketingNavbar = () => {
         <div className="mobile-menu-links">
           {getNavLinks()}
           <div className="mobile-menu-actions">
+            <a
+              className="nav-quest-btn"
+              href={META_QUEST_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={closeMenu}
+              style={{ justifyContent: 'center', textDecoration: 'none' }}
+            >
+              <MetaQuestLogo size={18} />
+              <span>Get it on Meta Quest</span>
+            </a>
             {user ? (
               <button className="nav-login-btn logout" onClick={handleLogout}>
                 Logout

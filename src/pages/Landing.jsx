@@ -2,8 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
+import { META_QUEST_URL, MetaLogo, MetaQuestLogo } from '../components/MetaLogos';
 import './LandingStyles.css';
 import './LandingStyles.css';
+
+export const META_STORE_URL = META_QUEST_URL;
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -62,6 +65,23 @@ const Landing = () => {
               Explore Features
             </button>
           </div>
+          <a
+            className="meta-store-hero-link"
+            href={META_QUEST_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Get SurgiVerse on the Meta Quest Store"
+          >
+            <span className="meta-store-badge">
+              <MetaQuestLogo size={28} color="#fff" />
+              <span className="meta-store-badge-text">
+                <span className="meta-store-badge-eyebrow">Available on</span>
+                <span className="meta-store-badge-name">Meta Quest</span>
+              </span>
+              <span className="meta-store-badge-divider" />
+              <MetaLogo size={24} color="#0082FB" />
+            </span>
+          </a>
         </div>
       </header>
 
@@ -88,6 +108,41 @@ const Landing = () => {
               <p>{feature.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Meta Quest Store Spotlight */}
+      <section className="meta-section">
+        <div className="meta-panel">
+          <div className="meta-logos-row">
+            <span className="meta-logo-pill" title="Meta">
+              <MetaLogo size={30} color="#0082FB" />
+              <span>Meta</span>
+            </span>
+            <span className="meta-logo-x">×</span>
+            <span className="meta-logo-pill" title="Meta Quest">
+              <MetaQuestLogo size={30} color="#fff" />
+              <span>Meta Quest</span>
+            </span>
+          </div>
+          <span className="rag-eyebrow">Now Live · Meta Horizon Store</span>
+          <h2 className="meta-title">Step Inside SurgiVerse on Meta Quest</h2>
+          <p className="meta-subtitle">
+            The full immersive operative experience — real CT anatomy, haptics-ready
+            interaction and AI scoring — now available as a native Quest app.
+          </p>
+          <div className="meta-actions">
+            <a
+              className="primary-btn glow meta-cta"
+              href={META_QUEST_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <MetaQuestLogo size={22} color="#000" />
+              &nbsp;Get it on Meta Quest
+            </a>
+            <span className="meta-store-note">Free listing · Meta Horizon OS · Quest 2 / 3 / 3S / Pro</span>
+          </div>
         </div>
       </section>
 

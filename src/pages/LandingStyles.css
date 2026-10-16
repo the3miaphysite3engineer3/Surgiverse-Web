@@ -202,6 +202,144 @@
   line-height: 1.6;
 }
 
+/* Meta Quest Store */
+.meta-store-hero-link {
+  display: inline-flex;
+  margin-top: 1.8rem;
+  text-decoration: none;
+}
+
+.meta-store-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  padding: 10px 18px 10px 16px;
+  transition: all 0.3s ease;
+}
+
+.meta-store-hero-link:hover .meta-store-badge {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(0, 130, 251, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 130, 251, 0.25);
+}
+
+.meta-store-badge-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.meta-store-badge-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.7;
+}
+
+.meta-store-badge-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.meta-store-badge-divider {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 2px 0;
+}
+
+.meta-section {
+  padding: 5rem 5%;
+  display: flex;
+  justify-content: center;
+  background: var(--bg-darker);
+}
+
+.meta-panel {
+  max-width: 1000px;
+  width: 100%;
+  text-align: center;
+  padding: 4rem 3rem;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(0, 130, 251, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 90%, rgba(0, 229, 255, 0.12), transparent 55%),
+    linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(2, 6, 23, 0.95));
+  border: 1px solid rgba(0, 130, 251, 0.35);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 130, 251, 0.1);
+}
+
+.meta-logos-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 1.8rem;
+  flex-wrap: wrap;
+}
+
+.meta-logo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 8px 20px 8px 14px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #fff;
+}
+
+.meta-logo-x {
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  font-weight: 300;
+}
+
+.meta-title {
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  font-weight: 800;
+  margin: 1.2rem 0 1rem;
+  color: #fff;
+}
+
+.meta-subtitle {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 680px;
+  margin: 0 auto 2.5rem;
+}
+
+.meta-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.meta-cta {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 1.2rem;
+  padding: 1.1rem 2.8rem;
+}
+
+.meta-store-note {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
 /* SurgiVideoRAG Spotlight */
 .rag-section {
   padding: 6rem 5%;

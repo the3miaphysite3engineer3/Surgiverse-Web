@@ -1,6 +1,7 @@
 import React from 'react';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
+import { META_QUEST_URL, MetaLogo, MetaQuestLogo } from '../components/MetaLogos';
 import './AboutStyles.css';
 
 const About = () => {
@@ -134,6 +135,33 @@ const About = () => {
               <span className="partner-link">Visit →</span>
             </a>
           ))}
+        </div>
+      </section>
+
+      {/* Platform Availability — Meta Quest */}
+      <section className="partners-section" style={{ background: 'transparent' }}>
+        <h2>Available on Meta Quest</h2>
+        <div className="partners-grid" style={{ maxWidth: '640px' }}>
+          <a
+            className="partner-card glass-card"
+            href={META_QUEST_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ borderColor: 'rgba(0,130,251,0.4)' }}
+          >
+            <div className="partner-logo" style={{ gap: '14px', background: '#0b1220', border: '1px solid rgba(255,255,255,0.12)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#fff', fontWeight: 800 }}>
+                <MetaQuestLogo size={32} color="#fff" /> Meta Quest
+              </span>
+              <span style={{ width: '1px', height: '32px', background: 'rgba(255,255,255,0.2)' }} />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#fff', fontWeight: 800 }}>
+                <MetaLogo size={28} color="#0082FB" /> Meta
+              </span>
+            </div>
+            <h3>SurgiVerse · Meta Horizon Store</h3>
+            <p>Get the native VR experience on Quest 2 / 3 / 3S / Pro via the official Meta store listing.</p>
+            <span className="partner-link">Get it on Meta Quest →</span>
+          </a>
         </div>
       </section>
 

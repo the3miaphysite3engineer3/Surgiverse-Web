@@ -83,6 +83,27 @@
   background: rgba(255, 77, 77, 0.05);
 }
 
+.nav-quest-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: #0a0a0a;
+  border: none;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.nav-quest-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 130, 251, 0.35);
+}
+
 .nav-links.desktop-only,
 .nav-actions.desktop-only {
   display: flex;
