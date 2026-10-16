@@ -28,6 +28,10 @@ const Contact = () => {
                  <span className="icon">📡</span>
                  <span>contact@surgiverse.tech</span>
                </div>
+               <div className="detail-item">
+                 <span className="icon">✉️</span>
+                 <a href="mailto:surgiverse28@gmail.com" style={{ color: 'inherit' }}>surgiverse28@gmail.com</a>
+               </div>
              </div>
           </div>
         </div>

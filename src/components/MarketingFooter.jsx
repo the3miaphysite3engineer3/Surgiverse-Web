@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import EmailIcon from '@mui/icons-material/Email';
 import { META_QUEST_URL, MetaLogo, MetaQuestLogo } from './MetaLogos';
 import './MarketingFooter.css';
 
@@ -23,8 +24,11 @@ const MarketingFooter = () => {
           <a href="https://www.facebook.com/profile.php?id=61590697887074" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
             <FacebookIcon fontSize="large" />
           </a>
-          <a href="https://www.linkedin.com/company/surgiverse28" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+          <a href="https://www.linkedin.com/company/surgiverse26" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
             <LinkedInIcon fontSize="large" />
+          </a>
+          <a href="mailto:surgiverse28@gmail.com" aria-label="Email" title="surgiverse28@gmail.com">
+            <EmailIcon fontSize="large" />
           </a>
           <a href={META_QUEST_URL} target="_blank" rel="noopener noreferrer" aria-label="Get SurgiVerse on Meta Quest" title="Get SurgiVerse on Meta Quest">
             <MetaQuestLogo size={20} />
