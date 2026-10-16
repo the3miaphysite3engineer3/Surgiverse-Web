@@ -159,7 +159,7 @@ const About = () => {
               </span>
             </div>
             <h3>SurgiVerse · Meta Horizon Store</h3>
-            <p>Get the native VR experience on Quest 2 / 3 / 3S / Pro via the official Meta store listing.</p>
+            <p>Get the native VR experience on Quest 2 / 3 / 3S / Pro via the official Meta store listing. Pilot procedure: Myringotomy — live now on the SurgiVerse Meta Horizon app.</p>
             <span className="partner-link">Get it on Meta Quest →</span>
           </a>
         </div>

@@ -130,6 +130,8 @@ const Landing = () => {
           <p className="meta-subtitle">
             The full immersive operative experience — real CT anatomy, haptics-ready
             interaction and AI scoring — now available as a native Quest app.
+            <br />
+            <strong style={{ color: '#fff' }}>Pilot procedure: Myringotomy</strong> — live now on the SurgiVerse Meta Horizon app.
           </p>
           <div className="meta-actions">
             <a
