@@ -85,7 +85,7 @@ const Dashboard = () => {
   return (
     <Box sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', width: "100%", pt: '80px' }}>
       <MarketingNavbar />
-      <Container maxWidth={false} sx={{ py: 4, width: '100vw' }}>
+      <Container maxWidth={false} sx={{ py: 4 }}>
         <Typography variant="h4" component="h1" sx={{ mb: 4, textAlign: 'center' }}>
           SurgiVerse Dashboard
         </Typography>

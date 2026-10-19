@@ -4,7 +4,6 @@ import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import { META_QUEST_URL, MetaLogo, MetaQuestLogo } from '../components/MetaLogos';
 import './LandingStyles.css';
-import './LandingStyles.css';
 
 export const META_STORE_URL = META_QUEST_URL;
 
@@ -131,7 +130,7 @@ const Landing = () => {
             The full immersive operative experience — real CT anatomy, haptics-ready
             interaction and AI scoring — now available as a native Quest app.
             <br />
-            <strong style={{ color: '#fff' }}>Pilot procedure: Myringotomy</strong> — live now on the SurgiVerse Meta Horizon app.
+            <strong className="text-strong">Pilot procedure: Myringotomy</strong> — live now on the SurgiVerse Meta Horizon app.
           </p>
           <div className="meta-actions">
             <a

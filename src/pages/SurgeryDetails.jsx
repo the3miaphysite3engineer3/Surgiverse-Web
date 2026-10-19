@@ -283,7 +283,7 @@ const SurgeryDetails = () => {
                                 {attempt.metrics && (
                                   <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                     {Object.entries(attempt.metrics).map(([k, v]) => (
-                                      <Typography key={k} variant="caption" sx={{ bgcolor: '#f0f2f5', px: 1, py: 0.5, borderRadius: 1 }}>
+                                      <Typography key={k} variant="caption" sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1 }}>
                                         <strong>{k}:</strong> {formatMetricValue(v)}
                                       </Typography>
                                     ))}

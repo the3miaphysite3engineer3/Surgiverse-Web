@@ -247,8 +247,8 @@ ${logsText}
     },
     ai: {
       alignSelf: 'flex-start',
-      backgroundColor: '#e0e0e0',
-      color: '#000',
+      backgroundColor: 'action.hover',
+      color: 'text.primary',
       borderRadius: '16px 16px 16px 4px',
       padding: '10px 14px',
       maxWidth: '75%'
@@ -256,7 +256,7 @@ ${logsText}
   };
 
   return (
-    <Paper sx={{ p: 2, height: '70vh', width: '500px', display: 'flex', flexDirection: 'column' }}>
+    <Paper sx={{ p: 2, height: '70vh', width: { xs: '94vw', sm: 500 }, maxWidth: '94vw', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6">AI Assistant</Typography>
@@ -297,7 +297,7 @@ ${logsText}
           display: 'flex',
           flexDirection: 'column',
           gap: 1.5,
-          backgroundColor: '#f5f5f5',
+          backgroundColor: 'action.hover',
           borderRadius: 2
         }}
       >

@@ -1,24 +1,24 @@
 .about-container {
   min-height: 100vh;
-  background-color: #020617;
-  color: #f8fafc;
+  background-color: var(--sv-bg-deep);
+  color: var(--sv-text);
   overflow-x: hidden;
 }
 
 /* Parallax Hero */
 .about-hero {
-  height: 60vh;
+  min-height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   position: relative;
-  background-image: linear-gradient(rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 0.9)), url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2000&auto=format&fit=crop');
+  background-image: linear-gradient(var(--sv-hero-overlay-top), var(--sv-hero-overlay-bottom)), url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2000&auto=format&fit=crop');
   background-attachment: fixed;
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
-  padding-top: 80px; /* Offset for navbar */
+  padding: 140px 0 80px; /* Top offset for navbar */
 }
 
 .about-hero-content {
@@ -35,16 +35,20 @@
 
 .about-subtitle {
   font-size: 1.2rem;
-  color: #cbd5e1;
+  color: var(--sv-text-muted);
+}
+
+.highlight {
+  color: var(--sv-accent);
 }
 
 /* Glassmorphism Cards */
 .glass-card {
-  background: rgba(30, 41, 59, 0.6);
+  background: var(--sv-surface);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--sv-border);
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px var(--sv-shadow);
 }
 
 /* Mission Section */
@@ -64,7 +68,7 @@
 }
 
 .mission-content h2 {
-  color: #00e5ff;
+  color: var(--sv-accent);
   font-size: 2rem;
   margin-bottom: 1.5rem;
 }
@@ -72,7 +76,7 @@
 .mission-content p {
   font-size: 1.15rem;
   line-height: 1.8;
-  color: #e2e8f0;
+  color: var(--sv-text-soft);
 }
 
 /* Team Section */
@@ -88,7 +92,7 @@
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 2rem;
   max-width: 1200px;
   margin: 0 auto;
@@ -101,7 +105,7 @@
 
 .team-card:hover {
   transform: translateY(-10px);
-  border-color: #00e5ff;
+  border-color: var(--sv-accent);
 }
 
 .team-avatar {
@@ -133,21 +137,21 @@
 }
 
 .team-role {
-  color: #00e5ff;
+  color: var(--sv-accent);
   font-weight: 600;
   margin-bottom: 1rem;
   font-size: 0.9rem;
 }
 
 .team-bio {
-  color: #94a3b8;
+  color: var(--sv-text-muted);
   font-size: 0.9rem;
   line-height: 1.5;
 }
 
 /* Advisors: larger portraits, max 3 across */
 .advisors-grid {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   max-width: 1100px;
 }
 
@@ -161,7 +165,7 @@
 .partners-section {
   padding: 5rem 5%;
   text-align: center;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--sv-section-tint);
 }
 
 .partners-section h2 {
@@ -171,7 +175,7 @@
 
 .partners-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   gap: 2rem;
   max-width: 1000px;
   margin: 0 auto;
@@ -190,7 +194,7 @@
 
 .partner-card:hover {
   transform: translateY(-10px);
-  border-color: #00e5ff;
+  border-color: var(--sv-accent);
 }
 
 .partner-logo {
@@ -216,12 +220,55 @@
 }
 
 .partner-card p {
-  color: #94a3b8;
+  color: var(--sv-text-muted);
   font-size: 0.95rem;
   line-height: 1.6;
 }
 
 .partner-link {
-  color: #00e5ff;
+  color: var(--sv-accent);
   font-weight: 700;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .about-hero {
+    background-attachment: scroll;
+    padding: 110px 0 60px;
+  }
+
+  .team-section,
+  .partners-section,
+  .mission-section {
+    padding: 3.5rem 6%;
+  }
+
+  .team-section h2,
+  .partners-section h2 {
+    font-size: 1.9rem;
+    margin-bottom: 2rem;
+  }
+
+  .mission-content {
+    padding: 2rem 1.5rem;
+  }
+
+  .mission-content h2 {
+    font-size: 1.6rem;
+  }
+
+  .mission-content p {
+    font-size: 1.02rem;
+  }
+
+  .team-card,
+  .partner-card {
+    padding: 2rem 1.25rem;
+  }
 }

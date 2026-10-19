@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeModeProvider, useThemeMode } from './context/ThemeContext';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfessorRoute from './components/ProfessorRoute';
@@ -22,21 +23,27 @@ import Contact from './pages/Contact';
 import Privacy from './pages/Privacy';
 import './App.css';
 
-const theme = createTheme({
+const getDesignTokens = (mode) => createTheme({
   palette: {
+    mode,
     primary: {
       main: '#3f51b5', // Professional Blue
     },
     secondary: {
       main: '#f50057', // Vibrant Pink
     },
-    background: {
-      default: '#f0f2f5', // Light Grey
-      paper: '#ffffff',
-    },
+    background: mode === 'dark'
+      ? {
+          default: '#0b1220',
+          paper: '#131c31',
+        }
+      : {
+          default: '#f0f2f5', // Light Grey
+          paper: '#ffffff',
+        },
   },
   typography: {
-    fontFamily: 'Roboto, sans-serif',
+    fontFamily: 'Inter, Roboto, system-ui, sans-serif',
     h4: {
       fontWeight: 700,
     },
@@ -46,7 +53,10 @@ const theme = createTheme({
   },
 });
 
-function App() {
+const ThemedApp = () => {
+  const { mode } = useThemeMode();
+  const theme = React.useMemo(() => getDesignTokens(mode), [mode]);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -142,6 +152,12 @@ function App() {
       </Router>
     </ThemeProvider>
   );
-}
+};
+
+const App = () => (
+  <ThemeModeProvider>
+    <ThemedApp />
+  </ThemeModeProvider>
+);
 
 export default App;

@@ -12,12 +12,13 @@ const modalStyle = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: '80%',
+  width: '94vw',
   maxWidth: 900,
   bgcolor: 'background.paper',
-  border: '2px solid #000',
+  border: '2px solid',
+  borderColor: 'divider',
   boxShadow: 24,
-  p: 4,
+  p: { xs: 2, sm: 4 },
   maxHeight: '90vh',
   overflowY: 'auto'
 };
@@ -284,7 +285,7 @@ const GradeStudents = () => {
                     </TabPanel>
                     <TabPanel value={tabValue} index={2}>
                         {getAttemptLogs(selectedAttempt).length > 0 ? (
-                            <Paper sx={{mt: 2, p: 2, maxHeight: 400, overflow: 'auto', backgroundColor: '#f5f5f5'}}>
+                            <Paper sx={{mt: 2, p: 2, maxHeight: 400, overflow: 'auto', bgcolor: 'action.hover'}}>
                                 {getAttemptLogs(selectedAttempt).map((log, index) => (
                                     <Typography key={index} component="pre" sx={{whiteSpace: 'pre-wrap', wordBreak: 'break-all'}}>
                                         {log}

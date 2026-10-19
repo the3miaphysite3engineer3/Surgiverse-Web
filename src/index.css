@@ -1,68 +1,113 @@
+/* SurgiVerse global styles + theme variables.
+   Light values live on :root; dark overrides on html[data-theme='dark'].
+   The ThemeContext sets data-theme on <html> and persists the choice. */
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ---- Light theme ---- */
+  color-scheme: light;
+
+  --sv-accent: #0090b8;
+  --sv-accent-soft: rgba(0, 144, 184, 0.1);
+  --sv-btn-accent: #06b6d4;
+  --sv-btn-text: #012a33;
+  --sv-bg: #f0f2f5;
+  --sv-bg-deep: #eef1f6;
+  --sv-bg-alt: #e6ebf2;
+  --sv-surface: rgba(255, 255, 255, 0.88);
+  --sv-surface-strong: #ffffff;
+  --sv-text: #0f172a;
+  --sv-text-soft: #29364d;
+  --sv-text-muted: #4b5a74;
+  --sv-border: rgba(15, 23, 42, 0.16);
+  --sv-border-strong: rgba(15, 23, 42, 0.28);
+  --sv-nav-bg: rgba(255, 255, 255, 0.94);
+  --sv-menu-bg: #ffffff;
+  --sv-nav-link: #29364d;
+  --sv-logo-from: #0f172a;
+  --sv-footer-bg: rgba(255, 255, 255, 0.75);
+  --sv-social-bg: rgba(15, 23, 42, 0.06);
+  --sv-shadow: rgba(15, 23, 42, 0.14);
+  --sv-section-tint: rgba(15, 23, 42, 0.035);
+  --sv-pill-bg: rgba(15, 23, 42, 0.05);
+  --sv-input-bg: rgba(255, 255, 255, 0.95);
+  --sv-hero-overlay-top: rgba(240, 244, 248, 0.82);
+  --sv-hero-overlay-bottom: rgba(230, 235, 242, 0.94);
+  --sv-panel-bg:
+    radial-gradient(circle at 20% 10%, rgba(0, 130, 251, 0.10), transparent 55%),
+    radial-gradient(circle at 80% 90%, rgba(6, 182, 212, 0.08), transparent 55%),
+    linear-gradient(145deg, #ffffff, #e9eff8);
+  --sv-rag-panel-bg:
+    radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.12), transparent 60%),
+    linear-gradient(145deg, #ffffff, #e9eff8);
+  --sv-title-gradient: linear-gradient(to right, #0f172a, #05749b);
+  --sv-ghost-bg: rgba(15, 23, 42, 0.04);
+  --sv-ghost-hover: rgba(15, 23, 42, 0.08);
+  --sv-badge-bg: #0f172a;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --sv-accent: #00e5ff;
+  --sv-accent-soft: rgba(0, 229, 255, 0.08);
+  --sv-btn-accent: #00e5ff;
+  --sv-btn-text: #00131a;
+  --sv-bg: #0b1220;
+  --sv-bg-deep: #020617;
+  --sv-bg-alt: #0f172a;
+  --sv-surface: rgba(30, 41, 59, 0.7);
+  --sv-surface-strong: #16213a;
+  --sv-text: #f8fafc;
+  --sv-text-soft: #e2e8f0;
+  --sv-text-muted: #a9b6c9;
+  --sv-border: rgba(255, 255, 255, 0.12);
+  --sv-border-strong: rgba(255, 255, 255, 0.25);
+  --sv-nav-bg: rgba(2, 6, 23, 0.88);
+  --sv-menu-bg: rgba(2, 6, 23, 0.97);
+  --sv-nav-link: #e2e8f0;
+  --sv-logo-from: #ffffff;
+  --sv-footer-bg: rgba(2, 6, 23, 0.6);
+  --sv-social-bg: rgba(255, 255, 255, 0.06);
+  --sv-shadow: rgba(0, 0, 0, 0.45);
+  --sv-section-tint: rgba(15, 23, 42, 0.6);
+  --sv-pill-bg: rgba(255, 255, 255, 0.06);
+  --sv-input-bg: rgba(15, 23, 42, 0.6);
+  --sv-hero-overlay-top: rgba(2, 6, 23, 0.7);
+  --sv-hero-overlay-bottom: rgba(2, 6, 23, 0.9);
+  --sv-panel-bg:
+    radial-gradient(circle at 20% 10%, rgba(0, 130, 251, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 90%, rgba(0, 229, 255, 0.12), transparent 55%),
+    linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(2, 6, 23, 0.95));
+  --sv-rag-panel-bg:
+    radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.15), transparent 60%),
+    linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(2, 6, 23, 0.95));
+  --sv-title-gradient: linear-gradient(to right, #ffffff, #00e5ff);
+  --sv-ghost-bg: rgba(255, 255, 255, 0.05);
+  --sv-ghost-hover: rgba(255, 255, 255, 0.1);
+  --sv-badge-bg: #0f172a;
 }
-a:hover {
-  color: #535bf2;
+
+html {
+  scrollbar-color: var(--sv-border-strong) transparent;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--sv-bg);
+  color: var(--sv-text);
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
 }
