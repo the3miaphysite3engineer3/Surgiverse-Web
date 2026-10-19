@@ -215,6 +215,9 @@ const GradeStudents = () => {
                             value={tabValue}
                             onChange={handleTabChange}
                             aria-label="attempt details tabs"
+                            variant="scrollable"
+                            scrollButtons="auto"
+                            allowScrollButtonsMobile
                             textColor="inherit"
                             sx={{
                                 '& .MuiTabs-indicator': {
@@ -222,6 +225,12 @@ const GradeStudents = () => {
                                 },
                                 '& .MuiTab-root.Mui-selected': {
                                     color: 'red',
+                                },
+                                '& .MuiTab-root': {
+                                    minWidth: { xs: 0, sm: 90 },
+                                    px: { xs: 1, sm: 2 },
+                                    fontSize: { xs: '0.72rem', sm: '0.875rem' },
+                                    whiteSpace: 'nowrap',
                                 },
                             }}
                         >
