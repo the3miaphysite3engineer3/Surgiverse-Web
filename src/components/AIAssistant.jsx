@@ -15,9 +15,37 @@ import { fetchChatMessages, sendChatMessage, subscribeChatMessages } from '../li
 import { getAttemptLogs, getAttemptProcedureName } from '../utils/attemptFormat';
 import { fetchActiveModels, defaultModel, formatPriceEGP } from '../utils/aiModels';
 
+// Direct-call fallback (local dev without the server proxy in api/ai-chat.js).
+// Production always uses the proxy: set VITE_AI_PROXY_URL and keep AI keys
+// server-side. SovereignEG is preferred; OpenRouter is the last resort.
+const SOVEREIGN_BASE = (import.meta.env.VITE_SOVEREIGN_BASE_URL || 'https://backend.sovereigneg.com/v1').replace(/\/+$/, '');
+const SOVEREIGN_API_KEY = import.meta.env.VITE_SOVEREIGN_AI_KEY;
+const SOVEREIGN_MODEL = import.meta.env.VITE_SOVEREIGN_MODEL || 'deepseek-v4-flash';
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
+
+function directProviderConfig() {
+  if (SOVEREIGN_API_KEY) {
+    return {
+      name: 'SovereignEG',
+      url: `${SOVEREIGN_BASE}/chat/completions`,
+      apiKey: SOVEREIGN_API_KEY,
+      model: SOVEREIGN_MODEL,
+      extraBody: {},
+    };
+  }
+  if (OPENROUTER_API_KEY) {
+    return {
+      name: 'OpenRouter',
+      url: OPENROUTER_URL,
+      apiKey: OPENROUTER_API_KEY,
+      model: OPENROUTER_MODEL,
+      extraBody: { reasoning: { enabled: true } },
+    };
+  }
+  return null;
+}
 // Optional server proxy (recommended): POST { attemptId, messages } → { content }.
 // The proxy holds the real keys (OpenRouter and/or SovereignEG) server-side,
 // so no AI key ships in the browser bundle. See next-migration/app/api/ai-chat.
@@ -178,36 +206,39 @@ ${logsText}
       return;
     }
 
-    if (!OPENROUTER_API_KEY) {
-      console.error('Missing VITE_OPENROUTER API key.');
-      await saveMessage('ai', '⚠️ OpenRouter API key is missing.');
+    const provider = directProviderConfig();
+    if (!provider) {
+      console.error('No direct AI provider key configured (VITE_SOVEREIGN_AI_KEY / VITE_OPENROUTER).');
+      await saveMessage('ai', '⚠️ No AI provider configured. Set VITE_AI_PROXY_URL or a provider key.');
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch(OPENROUTER_URL, {
+      const response = await fetch(provider.url, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          Authorization: `Bearer ${provider.apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: modelId || OPENROUTER_MODEL,
-          reasoning: { enabled: true },
-          messages: buildOpenRouterMessages(messages, prompt)
+          model: modelId || provider.model,
+          messages: buildOpenRouterMessages(messages, prompt),
+          ...provider.extraBody
         })
       });
 
-      const result = await response.json();
+      const result = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(result?.message || `OpenRouter request failed: ${response.status}`);
+        const detail = result?.error?.message ?? result?.message ?? '';
+        throw new Error(detail || `${provider.name} request failed: ${response.status}`);
       }
 
       const aiMessage = result?.choices?.[0]?.message;
-      const assistantContent = aiMessage?.content ?? '⚠️ No response from OpenRouter.';
-      const reasoningDetails = aiMessage?.reasoning_details ?? null;
+      const assistantContent = aiMessage?.content ?? `⚠️ No response from ${provider.name}.`;
+      const reasoningDetails =
+        aiMessage?.reasoning_details ?? aiMessage?.reasoning_content ?? null;
 
       await saveMessage('ai', assistantContent, reasoningDetails);
     } catch (err) {
