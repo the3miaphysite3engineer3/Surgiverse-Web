@@ -10,15 +10,8 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ReactMarkdown from 'react-markdown';
-import {
-  collection,
-  addDoc,
-  query,
-  orderBy,
-  onSnapshot,
-  serverTimestamp
-} from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { supabase } from '../supabase';
+import { fetchChatMessages, sendChatMessage, subscribeChatMessages } from '../lib/db';
 import { getAttemptLogs, getAttemptProcedureName } from '../utils/attemptFormat';
 import { fetchActiveModels, defaultModel, formatPriceEGP } from '../utils/aiModels';
 
@@ -38,11 +31,7 @@ const AIAssistant = ({ attempt, onClose }) => {
   const [modelId, setModelId] = useState('');
   const chatEndRef = useRef(null);
 
-  const messagesRef = attempt
-    ? collection(db, 'attemptChats', attempt.id, 'messages')
-    : null;
-
-  // Model catalog from Firestore (`ai_models`, seeded from SovereignEG).
+  // Model catalog from the `ai_models` catalog table (seeded from SovereignEG).
   useEffect(() => {
     fetchActiveModels().then((list) => {
       setModels(list);
@@ -55,25 +44,28 @@ const AIAssistant = ({ attempt, onClose }) => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Load chat history
+  // Load chat history + subscribe to new messages (realtime).
   useEffect(() => {
-    if (!messagesRef) return;
+    if (!attempt) return;
 
-    const q = query(messagesRef, orderBy('createdAt'));
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        setMessages(snapshot.docs.map(doc => doc.data()));
-      },
-      (err) => {
-        // The Firestore `Listen` stream fails with `unavailable` when offline
-        // (ERR_NAME_NOT_RESOLVED / ERR_NETWORK_CHANGED in the console).
-        // This is expected offline — don't crash, keep showing cached messages.
-        console.warn('Chat listener offline/unavailable:', err?.code || err?.message || err);
-      }
-    );
+    let cancelled = false;
+    fetchChatMessages(attempt.id)
+      .then((rows) => {
+        if (!cancelled) setMessages(rows);
+      })
+      .catch((err) => {
+        console.warn('Failed to load chat history:', err?.message || err);
+      });
 
-    return () => unsubscribe();
+    const unsubscribe = subscribeChatMessages(attempt.id, (row) => {
+      // Realtime INSERTs fire for our own writes too — dedupe by id.
+      setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attempt?.id]);
 
@@ -112,21 +104,20 @@ ${logsText}
 
   const saveMessage = async (role, content, reasoning_details = null) => {
     try {
-      const messageDoc = {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+
+      await sendChatMessage(attempt.id, user.id, {
         role,
         content,
-        createdAt: serverTimestamp()
-      };
-
-      if (reasoning_details !== null) {
-        messageDoc.reasoning_details = reasoning_details;
-      }
-
-      await addDoc(messagesRef, messageDoc);
+        reasoning_details,
+      });
     } catch (err) {
-      // Offline writes queue/reject — log instead of throwing an unhandled
-      // rejection ("Failed to get document because the client is offline").
-      console.warn('Failed to save chat message (offline?):', err?.code || err?.message || err);
+      // Offline writes/rejected policies — log instead of throwing an
+      // unhandled rejection that would break the chat UI.
+      console.warn('Failed to save chat message:', err?.message || err);
     }
   };
 
@@ -160,7 +151,8 @@ ${logsText}
     // persists the reply — the onSnapshot listener above renders it.
     if (AI_PROXY_URL) {
       try {
-        const idToken = await auth.currentUser?.getIdToken().catch(() => null);
+        const { data } = await supabase.auth.getSession();
+        const idToken = data?.session?.access_token ?? null;
         const response = await fetch(AI_PROXY_URL, {
           method: 'POST',
           headers: {

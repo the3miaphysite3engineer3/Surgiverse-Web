@@ -1,7 +1,6 @@
 // Client helper for the `ai_models` catalog (SovereignEG ids + EGP prices).
-// Seeded with Admin SDK: npm run seed:models -- --key PATH\serviceAccount.json
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../firebase';
+// Seeded into Supabase via: npm run seed:models
+import { supabase } from '../supabase';
 
 // Offline / pre-seed fallback so the AI assistant always has a model.
 export const FALLBACK_MODELS = [
@@ -27,22 +26,25 @@ export const FALLBACK_MODELS = [
 
 let cache = null;
 
-/** Active models from Firestore, cheapest input first. Falls back offline. */
+/** Active models from the catalog, cheapest input first. Falls back offline. */
 export async function fetchActiveModels() {
   if (cache) return cache;
   try {
-    // No orderBy: avoids requiring a composite index; sort client-side.
-    const snap = await getDocs(
-      query(collection(db, 'ai_models'), where('active', '==', true)),
-    );
-    const models = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    // Rows are document-style: { id, data: {...catalog fields...} }.
+    // No server-side sort: keeps the query index-free; ordered client-side.
+    const { data: rows, error } = await supabase
+      .from('ai_models')
+      .select('id, data')
+      .eq('data->>active', 'true');
+    if (error) throw error;
+    const models = (rows ?? []).map((r) => ({ id: r.id, ...(r.data ?? {}) }));
     if (models.length === 0) return (cache = FALLBACK_MODELS);
     models.sort(
       (a, b) => (a.inputPerMTokensEGP ?? Infinity) - (b.inputPerMTokensEGP ?? Infinity),
     );
     return (cache = models);
   } catch (err) {
-    console.warn('ai_models unavailable, using fallback:', err?.code || err?.message || err);
+    console.warn('ai_models unavailable, using fallback:', err?.message || err);
     return (cache = FALLBACK_MODELS);
   }
 }

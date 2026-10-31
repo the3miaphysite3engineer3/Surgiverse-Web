@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchAllAttempts, fetchAllUsers, fetchSurgeries, updateAttemptScore } from '../lib/db';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import { formatCompletionTime, formatAttemptDate, firestoreErrorMessage, getAttemptSurgeryId, getAttemptProcedureName, getAttemptLogs, formatMetricValue } from '../utils/attemptFormat';
@@ -57,35 +56,33 @@ const GradeStudents = () => {
   const [tabValue, setTabValue] = useState(0);
 
   useEffect(() => {
+    document.title = 'SurgiVerse - Grade Students';
     const fetchData = async () => {
       setLoading(true);
       try {
-        const usersCollection = await getDocs(collection(db, 'users'));
         const usersData = {};
-        usersCollection.forEach(doc => {
-          usersData[doc.id] = doc.data();
+        (await fetchAllUsers()).forEach(u => {
+          usersData[u.uid] = u;
         });
         setUsers(usersData);
 
-        const surgeriesCollection = await getDocs(collection(db, 'surgeries'));
         const surgeriesData = {};
-        surgeriesCollection.forEach(doc => {
-            surgeriesData[doc.id] = doc.data();
+        (await fetchSurgeries()).forEach(s => {
+          surgeriesData[s.id] = s;
         });
         setSurgeries(surgeriesData);
 
-        const attemptsCollection = await getDocs(collection(db, 'attempts'));
-        const attemptsData = attemptsCollection.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const attemptsData = await fetchAllAttempts();
         setAttempts(attemptsData);
 
         const initialGrades = {};
         attemptsData.forEach(attempt => {
-            initialGrades[attempt.id] = attempt.score || '';
+            initialGrades[attempt.id] = attempt.score ?? '';
         });
         setGrades(initialGrades);
 
       } catch (err) {
-        setError(firestoreErrorMessage(err));
+        setError(err?.message || firestoreErrorMessage(err));
         console.error(err);
       }
       setLoading(false);
@@ -100,16 +97,14 @@ const GradeStudents = () => {
 
   const handleGradeSubmit = async (attemptId) => {
     try {
-      const attemptRef = doc(db, 'attempts', attemptId);
-      await updateDoc(attemptRef, {
-        score: parseInt(grades[attemptId], 10)
-      });
+      const parsed = parseInt(grades[attemptId], 10);
+      await updateAttemptScore(attemptId, Number.isNaN(parsed) ? null : parsed);
       // Refresh the data to show the updated score
-      const attemptsCollection = await getDocs(collection(db, 'attempts'));
-      const attemptsData = attemptsCollection.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const attemptsData = await fetchAllAttempts();
       setAttempts(attemptsData);
     } catch (err) {
       console.error("Failed to update grade:", err);
+      setError(err?.message || "Failed to update grade.");
     }
   };
 

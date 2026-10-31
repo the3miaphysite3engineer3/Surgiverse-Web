@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { supabase } from '../supabase';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import './Login.css';
 
 const Login = () => {
-    const [isLogin, setIsLogin] = useState(true);
+    // mode: 'login' | 'register' | 'forgot' | 'reset'
+    const [mode, setMode] = useState('login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [error, setError] = useState('');
+    const [notice, setNotice] = useState('');
+    const [busy, setBusy] = useState(false);
     const navigate = useNavigate();
 
     const headRef = useRef(null);
@@ -23,36 +25,105 @@ const Login = () => {
     const ecgCanvasRef = useRef(null);
     const authBtnRef = useRef(null);
 
-    const handleAuth = async () => {
+    const resetFeedback = () => {
         setError('');
+        setNotice('');
+    };
+
+    const handleSignIn = async () => {
+        setBusy(true);
         try {
-            if (isLogin) {
-                await signInWithEmailAndPassword(auth, email, password);
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.message.replace('AuthApiError: ', ''));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const handleRegister = async () => {
+        if (!firstName || !lastName) {
+            setError('Please enter your first and last name.');
+            return;
+        }
+        setBusy(true);
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: { data: { firstName, lastName } },
+            });
+            if (error) throw error;
+            if (data.session) {
                 navigate('/dashboard');
             } else {
-                if (!firstName || !lastName) {
-                    setError('Please enter your first and last name.');
-                    return;
-                }
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                await setDoc(doc(db, 'users', user.uid), {
-                    uid: user.uid,
-                    firstName,
-                    lastName,
-                    email,
-                    role: 'student',
-                });
-                navigate('/dashboard');
+                setNotice('Account created. Check your email to confirm your address, then sign in.');
+                setMode('login');
             }
-        } catch (error) {
-            setError(error.message.replace("Firebase: ", ""));
+        } catch (err) {
+            setError(err.message.replace('AuthApiError: ', ''));
+        } finally {
+            setBusy(false);
         }
+    };
+
+    const handleForgot = async () => {
+        setBusy(true);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/login`,
+            });
+            if (error) throw error;
+            setNotice('Password reset link sent — check your email inbox.');
+        } catch (err) {
+            setError(err.message.replace('AuthApiError: ', ''));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const handleReset = async () => {
+        if (!password || password !== confirmPassword) {
+            setError('Passwords do not match.');
+            return;
+        }
+        setBusy(true);
+        try {
+            const { error } = await supabase.auth.updateUser({ password });
+            if (error) throw error;
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.message.replace('AuthApiError: ', ''));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const handleAuth = () => {
+        resetFeedback();
+        if (mode === 'login') return handleSignIn();
+        if (mode === 'register') return handleRegister();
+        if (mode === 'forgot') return handleForgot();
+        if (mode === 'reset') return handleReset();
     };
 
     useEffect(() => {
         document.title = 'SurgiVerse - Login & Register';
-        
+
+        // A password-reset email link lands back here with a recovery token;
+        // supabase-js detects it and switches the form to "set new password".
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                setMode('reset');
+                resetFeedback();
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, []);
+
+    useEffect(() => {
         // Only run animations on non-mobile devices
         if (window.innerWidth < 769) return;
 
@@ -79,9 +150,9 @@ const Login = () => {
         window.addEventListener('resize', handleResize);
         handleResize();
 
-        const handleMouseMove = e => { 
-            mouseX = e.clientX; 
-            mouseY = e.clientY; 
+        const handleMouseMove = e => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
         };
         document.body.style.cursor = 'none'; // Hide cursor only for desktop
         window.addEventListener('mousemove', handleMouseMove);
@@ -152,12 +223,16 @@ const Login = () => {
         };
     }, []);
 
+    const emailInput = (
+        <input type="email" placeholder="Email Address (SURGEON_ID)" value={email} onChange={(e) => setEmail(e.target.value)} required />
+    );
+
     return (
         <div className="scope-container">
             <MarketingNavbar />
             <canvas id="ecgCanvas" ref={ecgCanvasRef}></canvas>
             <canvas id="cableCanvas" ref={cableCanvasRef}></canvas>
-            
+
             <div id="scope-head" ref={headRef}><div className="optic-lens"></div></div>
             <div id="beam" className="light-cone" ref={beamRef}></div>
 
@@ -168,35 +243,67 @@ const Login = () => {
                     <span>STATUS: ONLINE</span>
                 </div>
 
-                <div className="auth-tabs">
-                    <button 
-                        type="button" 
-                        onClick={() => {setIsLogin(true); setError('');}} 
-                        className={`tab-button ${isLogin ? 'active' : ''}`}>
-                        Login
-                    </button>
-                    <button 
-                        type="button" 
-                        onClick={() => {setIsLogin(false); setError('');}} 
-                        className={`tab-button ${!isLogin ? 'active' : ''}`}>
-                        Register
-                    </button>
-                </div>
+                {mode !== 'forgot' && mode !== 'reset' && (
+                    <div className="auth-tabs">
+                        <button
+                            type="button"
+                            onClick={() => { setMode('login'); resetFeedback(); }}
+                            className={`tab-button ${mode === 'login' ? 'active' : ''}`}>
+                            Login
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { setMode('register'); resetFeedback(); }}
+                            className={`tab-button ${mode === 'register' ? 'active' : ''}`}>
+                            Register
+                        </button>
+                    </div>
+                )}
+
+                {mode === 'forgot' && <h2 style={{ textAlign: 'center', margin: '0 0 16px', fontSize: '18px' }}>Reset password</h2>}
+                {mode === 'reset' && <h2 style={{ textAlign: 'center', margin: '0 0 16px', fontSize: '18px' }}>Set a new password</h2>}
 
                 {error && <p style={{ color: 'red', textAlign: 'center', fontSize: '14px', marginBottom: '15px' }}>{error}</p>}
+                {notice && <p style={{ color: '#0a8f6f', textAlign: 'center', fontSize: '14px', marginBottom: '15px' }}>{notice}</p>}
 
-                {!isLogin && (
+                {mode === 'register' && (
                     <div style={{display: 'flex', gap: '10px', flexDirection: 'column'}}>
                         <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
                         <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
                     </div>
                 )}
-                <input type="email" placeholder="Email Address (SURGEON_ID)" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                <input type="password" placeholder="Password (BIOMETRIC_PASS)" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                
-                <button id="authBtn" ref={authBtnRef} onClick={handleAuth}>
-                    {isLogin ? 'Begin Operation' : 'Create Account'}
+                {mode !== 'reset' && emailInput}
+                {(mode === 'login' || mode === 'register') && (
+                    <input type="password" placeholder="Password (BIOMETRIC_PASS)" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                )}
+                {mode === 'reset' && (
+                    <>
+                        <input type="password" placeholder="New password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                        <input type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+                    </>
+                )}
+
+                <button id="authBtn" ref={authBtnRef} onClick={handleAuth} disabled={busy}>
+                    {busy
+                        ? 'Working…'
+                        : mode === 'login'
+                            ? 'Begin Operation'
+                            : mode === 'register'
+                                ? 'Create Account'
+                                : mode === 'forgot'
+                                    ? 'Send Reset Link'
+                                    : 'Save New Password'}
                 </button>
+
+                {(mode === 'login' || mode === 'forgot') && (
+                    <button
+                        type="button"
+                        className="auth-secondary-link"
+                        onClick={() => { setMode(mode === 'forgot' ? 'login' : 'forgot'); resetFeedback(); setPassword(''); }}
+                    >
+                        {mode === 'login' ? 'Forgot password?' : '← Back to sign in'}
+                    </button>
+                )}
             </div>
             <div className="login-footer-wrapper">
                 <MarketingFooter />

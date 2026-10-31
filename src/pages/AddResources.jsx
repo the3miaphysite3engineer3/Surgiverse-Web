@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import { Box, Typography, Container, Paper, TextField, Button, CircularProgress } from '@mui/material';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { addAiResource } from '../lib/db';
 
 const AddResources = () => {
   const [markdown, setMarkdown] = useState('');
@@ -24,14 +23,11 @@ const AddResources = () => {
     }
 
     try {
-      await addDoc(collection(db, 'ai_resources'), {
-        markdown: markdown,
-        createdAt: serverTimestamp(),
-      });
+      await addAiResource(markdown);
       setSuccess(true);
       setMarkdown(''); // Clear the textarea after successful submission
     } catch (err) {
-      setError('Failed to add resource. Please try again.');
+      setError(err?.message || 'Failed to add resource. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);

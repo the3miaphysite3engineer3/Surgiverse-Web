@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchGlobalConfig, saveGlobalConfig } from '../lib/db';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
-import { Box, Typography, Slider, Switch, FormControlLabel, Button, Container, Paper, CircularProgress, Grid, TextField } from '@mui/material';
+import { Box, Typography, Slider, Switch, FormControlLabel, Button, Container, Paper, CircularProgress, Grid } from '@mui/material';
 
 const GameSettings = () => {
   const [settings, setSettings] = useState({
@@ -18,16 +17,16 @@ const GameSettings = () => {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    document.title = 'SurgiVerse - Game Settings';
     const fetchSettings = async () => {
       setLoading(true);
       try {
-        const settingsDoc = doc(db, 'config', 'global');
-        const settingsSnapshot = await getDoc(settingsDoc);
-        if (settingsSnapshot.exists()) {
-          setSettings(settingsSnapshot.data());
-        }
+        const stored = await fetchGlobalConfig();
+        // Merge stored fields over defaults; ignore the row id.
+        const { id: _ignored, ...fields } = stored;
+        setSettings(prev => ({ ...prev, ...fields }));
       } catch (err) {
-        setError('Failed to fetch settings.');
+        setError(err?.message || 'Failed to fetch settings.');
         console.error(err);
       }
       setLoading(false);
@@ -44,11 +43,10 @@ const GameSettings = () => {
     setError(null);
     setSuccess(false);
     try {
-      const settingsDoc = doc(db, 'config', 'global');
-      await setDoc(settingsDoc, settings, { merge: true });
+      await saveGlobalConfig(settings);
       setSuccess(true);
     } catch (err) {
-      setError('Failed to save settings. Please try again.');
+      setError(err?.message || 'Failed to save settings. Please try again.');
       console.error(err);
     }
   };

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchSurgery } from '../lib/db';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import { Box, Container, Paper, Typography, CircularProgress } from '@mui/material';
@@ -14,11 +13,10 @@ const Surgery = () => {
 
   useEffect(() => {
     document.title = 'SurgiVerse - Surgery Details';
-    const fetchSurgery = async () => {
+    const fetchSurgeryDetails = async () => {
       try {
-        const surgeryDoc = await getDoc(doc(db, 'surgeries', id));
-        if (surgeryDoc.exists()) {
-          const surgeryData = { id: surgeryDoc.id, ...surgeryDoc.data() };
+        const surgeryData = await fetchSurgery(id);
+        if (surgeryData) {
           setSurgery(surgeryData);
           document.title = `SurgiVerse - ${surgeryData.title}`;
         } else {
@@ -32,7 +30,7 @@ const Surgery = () => {
       }
     };
 
-    fetchSurgery();
+    fetchSurgeryDetails();
   }, [id]);
 
   if (loading) {

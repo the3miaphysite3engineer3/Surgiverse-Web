@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchAllAttempts, fetchAllUsers } from '../lib/db';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import { completionTimeForSum, firestoreErrorMessage } from '../utils/attemptFormat';
@@ -14,21 +13,19 @@ const Analytics = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    document.title = 'SurgiVerse - Analytics';
     const fetchData = async () => {
       setLoading(true);
       try {
-        const usersCollection = await getDocs(collection(db, 'users'));
         const usersData = {};
-        usersCollection.forEach(doc => {
-          usersData[doc.id] = doc.data();
+        (await fetchAllUsers()).forEach(u => {
+          usersData[u.uid] = u;
         });
         setUsers(usersData);
 
-        const attemptsCollection = await getDocs(collection(db, 'attempts'));
-        const attemptsData = attemptsCollection.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setAttempts(attemptsData);
+        setAttempts(await fetchAllAttempts());
       } catch (err) {
-        setError(firestoreErrorMessage(err));
+        setError(err?.message || firestoreErrorMessage(err));
         console.error(err);
       }
       setLoading(false);

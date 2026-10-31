@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc, collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchSurgery, fetchUserAttempts, fetchChatMessages } from '../lib/db';
 import { useAuth } from '../hooks/useAuth';
 import { 
     Box, Container, Typography, Paper, CircularProgress, List, ListItem, 
@@ -18,8 +17,6 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { normalizeValue } from '../utils/normalizeValue';
 
-const FIRESTORE_IN_QUERY_LIMIT = 30;
-
 const SurgeryDetails = () => {
   const { id } = useParams();
   const [surgery, setSurgery] = useState(null);
@@ -34,88 +31,38 @@ const SurgeryDetails = () => {
     const fetchSurgeryDetails = async () => {
       try {
         setLoading(true);
-        const surgeryDoc = doc(db, 'surgeries', id);
-        const surgerySnapshot = await getDoc(surgeryDoc);
+        const surgeryData = await fetchSurgery(id);
 
-        let surgeryData = null;
-        if (surgerySnapshot.exists()) {
-          surgeryData = { id: surgerySnapshot.id, ...surgerySnapshot.data() };
-          setSurgery(surgeryData);
-        } else {
+        if (!surgeryData) {
           setError('Surgery not found.');
+          return;
         }
+        setSurgery(surgeryData);
 
-        if (user && surgeryData) {
-          const attemptsCollection = collection(db, 'attempts');
-          // Legacy docs use `surgery_id`, newer clients may use `surgeryID`/`surgeryId`.
-          const attemptsByLegacyIdQuery = query(
-            attemptsCollection,
-            where('uid', '==', user.uid),
-            where('surgery_id', '==', id)
-          );
-          const attemptsByNewIdQuery = query(
-            attemptsCollection,
-            where('uid', '==', user.uid),
-            where('surgeryID', '==', id)
-          );
-          const [attemptsByLegacyIdSnapshot, attemptsByNewIdSnapshot] = await Promise.all([
-            getDocs(attemptsByLegacyIdQuery),
-            getDocs(attemptsByNewIdQuery)
-          ]);
-
+        if (user) {
+          // One query for the user's attempts, matched client-side the same way
+          // the Firestore version matched: by surgery id or normalized procedure
+          // name (covers legacy docs written by older clients).
+          const userAttempts = await fetchUserAttempts(user.uid);
           const surgeryNames = [surgeryData.title, surgeryData.procedureName]
             .filter((name) => typeof name === 'string')
             .map((name) => name.trim())
             .filter(Boolean);
-          const surgeryNamesSet = new Set(surgeryNames);
-          const normalizedSurgeryNamesSet = new Set(Array.from(surgeryNamesSet).map(normalizeValue).filter(Boolean));
+          const normalizedSurgeryNames = new Set(surgeryNames.map(normalizeValue).filter(Boolean));
 
-          let attemptsByProcedureNameDocs = [];
-          if (surgeryNamesSet.size > 0) {
-            const surgeryNameBatches = [];
-            const surgeryNamesList = Array.from(surgeryNamesSet);
-            for (let i = 0; i < surgeryNamesList.length; i += FIRESTORE_IN_QUERY_LIMIT) {
-              surgeryNameBatches.push(surgeryNamesList.slice(i, i + FIRESTORE_IN_QUERY_LIMIT));
-            }
-
-            const procedureNameSnapshots = await Promise.all(
-              surgeryNameBatches.map((batch) =>
-                getDocs(
-                  query(
-                    attemptsCollection,
-                    where('uid', '==', user.uid),
-                    where('procedureName', 'in', batch)
-                  )
-                )
-              )
+          const relevant = userAttempts.filter((a) => {
+            const attemptSurgeryId = getAttemptSurgeryId(a);
+            const normalizedProcedureName = normalizeValue(getAttemptProcedureName(a));
+            return (
+              (attemptSurgeryId && attemptSurgeryId === id) ||
+              (normalizedProcedureName && normalizedSurgeryNames.has(normalizedProcedureName))
             );
+          });
 
-            attemptsByProcedureNameDocs = procedureNameSnapshots.flatMap((snapshot) => snapshot.docs);
-          }
-
-          const relevantAttemptDocsById = new Map();
-          const addIfRelevant = (d) => {
-            const attemptData = d.data();
-            const attemptSurgeryId = attemptData.surgery_id || attemptData.surgeryID || attemptData.surgeryId;
-            const normalizedProcedureName = normalizeValue(attemptData.procedureName);
-
-            if (attemptSurgeryId === id || (normalizedProcedureName && normalizedSurgeryNamesSet.has(normalizedProcedureName))) {
-              relevantAttemptDocsById.set(d.id, d);
-            }
-          };
-
-          attemptsByLegacyIdSnapshot.docs.forEach(addIfRelevant);
-          attemptsByNewIdSnapshot.docs.forEach(addIfRelevant);
-          attemptsByProcedureNameDocs.forEach(addIfRelevant);
-
-          const attemptsList = await Promise.all(Array.from(relevantAttemptDocsById.values()).map(async d => {
-            const attemptData = { id: d.id, ...d.data() };
+          const attemptsList = await Promise.all(relevant.map(async (attemptData) => {
             let chatMessages = [];
             try {
-              const messagesRef = collection(db, 'attemptChats', d.id, 'messages');
-              const msgQuery = query(messagesRef, orderBy('createdAt'));
-              const msgSnapshot = await getDocs(msgQuery);
-              chatMessages = msgSnapshot.docs.map(m => m.data());
+              chatMessages = await fetchChatMessages(attemptData.id);
             } catch (e) {
               console.error("Failed to fetch chat logs", e);
             }

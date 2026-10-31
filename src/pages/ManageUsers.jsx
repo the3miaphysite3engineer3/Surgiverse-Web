@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchAllUsers, updateUserRole } from '../lib/db';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import { Box, Typography, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Select, MenuItem, Button, CircularProgress } from '@mui/material';
@@ -11,14 +10,13 @@ const ManageUsers = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    document.title = 'SurgiVerse - Manage Users';
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        const usersCollection = await getDocs(collection(db, 'users'));
-        const usersData = usersCollection.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setUsers(usersData);
+        setUsers(await fetchAllUsers());
       } catch (err) {
-        setError('Failed to fetch users.');
+        setError(err?.message || 'Failed to fetch users.');
         console.error(err);
       }
       setLoading(false);
@@ -29,14 +27,14 @@ const ManageUsers = () => {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, { role: newRole });
+      await updateUserRole(userId, newRole);
       // Update the local state to reflect the change
-      setUsers(prevUsers => prevUsers.map(user => 
-        user.id === userId ? { ...user, role: newRole } : user
+      setUsers(prevUsers => prevUsers.map(user =>
+        user.uid === userId ? { ...user, role: newRole } : user
       ));
     } catch (err) {
       console.error("Failed to update user role:", err);
+      setError(err?.message || 'Failed to update user role.');
     }
   };
 
@@ -67,13 +65,13 @@ const ManageUsers = () => {
               </TableHead>
               <TableBody>
                 {users.map(user => (
-                  <TableRow key={user.id}>
+                  <TableRow key={user.uid}>
                     <TableCell>{user.firstName} {user.lastName}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Select
                         value={user.role || 'student'}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        onChange={(e) => handleRoleChange(user.uid, e.target.value)}
                       >
                         <MenuItem value="student">Student</MenuItem>
                         <MenuItem value="TA">TA</MenuItem>

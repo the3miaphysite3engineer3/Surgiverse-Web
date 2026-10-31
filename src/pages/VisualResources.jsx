@@ -19,8 +19,7 @@ import {
   LinearProgress,
 } from '@mui/material';
 import { GoogleGenAI, Modality } from '@google/genai';
-import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { addRefVideo } from '../lib/db';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const SEND_SAMPLE_RATE = 16000;
@@ -453,14 +452,12 @@ const VisualResources = () => {
         throw new Error('Failed to upload any frames to Cloudinary.');
       }
 
-      // Create Firestore document
-      const doc = {
+      // Persist to the ref_videos table (id: <uuid>, data: document blob)
+      await addRefVideo({
         title: title?.trim() || file.name,
         frames: uploaded,
         sourceFileName: file.name,
-        createdAt: serverTimestamp(),
-      };
-      await addDoc(collection(db, 'refVideos'), doc);
+      });
       setStatusMessage({ severity: 'success', text: `Successfully saved ${uploaded.length} frames to refVideos collection.` });
     } catch (err) {
       console.error(err);

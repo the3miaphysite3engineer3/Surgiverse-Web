@@ -35,9 +35,9 @@ The application supports three distinct user roles: **Professors**, **Teaching A
   - **Material-UI (MUI):** A comprehensive React UI component library.
   - **React Router:** For declarative routing and navigation.
 - **Backend & Database:**
-  - **Firebase:**
-    - **Authentication:** For user sign-up, sign-in, and role-based access control.
-    - **Firestore:** A NoSQL database for storing all application data, including surgeries, user attempts, and settings.
+  - **Supabase:**
+    - **Authentication:** For user sign-up, sign-in, password reset, and role-based access control (roles on the `users` table).
+    - **Postgres:** Stores all application data — surgeries, user attempts, chat messages, settings — with row-level security mirroring the former Firestore rules.
 - **Reporting:**
   - **jsPDF & html2canvas:** For generating and downloading PDF reports of surgery attempts.
 
@@ -47,7 +47,7 @@ Follow these instructions to set up and run the project in your local environmen
 
 ### Prerequisites
 - Node.js (v18 or later)
-- An active Firebase project
+- An active Supabase project (schema under `supabase/migrations/`; AI catalog via `npm run seed:models`)
 
 ### Installation & Setup
 
@@ -63,21 +63,14 @@ Follow these instructions to set up and run the project in your local environmen
     ```
 
 3.  **Configure environment variables:**
-    - Create a `.env` file in the project root.
-    - Add Firebase and OpenRouter keys using Vite environment variable names.
-    - Your `.env` should look like:
+    - Create a `.env` file in the project root (see `.env.example`).
+    - Add the Supabase URL + anon key (Project settings → API) and the OpenRouter key:
     ```dotenv
+    VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+    VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
     VITE_OPENROUTER=YOUR_OPENROUTER_API_KEY
-    VITE_FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY
-    VITE_FIREBASE_AUTH_DOMAIN=YOUR_FIREBASE_AUTH_DOMAIN
-    VITE_FIREBASE_DATABASE_URL=YOUR_FIREBASE_DATABASE_URL
-    VITE_FIREBASE_PROJECT_ID=YOUR_FIREBASE_PROJECT_ID
-    VITE_FIREBASE_STORAGE_BUCKET=YOUR_FIREBASE_STORAGE_BUCKET
-    VITE_FIREBASE_MESSAGING_SENDER_ID=YOUR_FIREBASE_MESSAGING_SENDER_ID
-    VITE_FIREBASE_APP_ID=YOUR_FIREBASE_APP_ID
-    VITE_FIREBASE_MEASUREMENT_ID=YOUR_FIREBASE_MEASUREMENT_ID
     ```
-    - The app loads these values through `import.meta.env.VITE_*` in `src/firebase.js` and the AI assistant.
+    - The app loads these values through `import.meta.env.VITE_*` in `src/supabase.js` and the AI assistant.
 
 4.  **Run the development server:**
     ```sh

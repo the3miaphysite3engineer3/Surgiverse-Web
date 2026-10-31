@@ -4,11 +4,11 @@
 // - R2 entries ({ url, r2Key }) whose only URL is the unsigned S3 API
 //   endpoint need a signed URL: the app POSTs their r2Keys to the signer
 //   endpoint (VITE_R2_SIGNER_URL, see worker/README.md) with the viewer's
-//   Firebase ID token. Results are cached in memory until near-expiry.
+//   Supabase access token. Results are cached in memory until near-expiry.
 // - If no signer is configured (or it fails), falls back to the stored
 //   `url` directly, and the viewer shows an "Open original" fallback.
 import { screenshotSrc } from './attemptFormat';
-import { auth } from '../firebase';
+import { supabase } from '../supabase';
 
 const SIGNER_URL = (import.meta.env.VITE_R2_SIGNER_URL || '')
   .trim()
@@ -119,7 +119,8 @@ export async function resolveScreenshotList(entries) {
   if (pending.size === 0) return srcs;
 
   try {
-    const token = await auth?.currentUser?.getIdToken?.().catch(() => null);
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token ?? null;
     if (!token) return srcs;
     const res = await fetch(SIGNER_URL, {
       method: 'POST',

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchSurgeries, fetchUserAttempts } from '../lib/db';
 import { useAuth } from '../hooks/useAuth';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
@@ -20,18 +19,12 @@ const Dashboard = () => {
     document.title = 'SurgiVerse - Dashboard';
     const fetchData = async () => {
       try {
-        // Fetch surgeries
-        const surgeriesCollection = collection(db, 'surgeries');
-        const surgerySnapshot = await getDocs(surgeriesCollection);
-        const surgeryList = surgerySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const surgeryList = await fetchSurgeries();
 
         // Fetch attempts if user is logged in
         let attemptsList = [];
         if (user) {
-          const attemptsCollection = collection(db, 'attempts');
-          const q = query(attemptsCollection, where('uid', '==', user.uid));
-          const attemptsSnapshot = await getDocs(q);
-          attemptsList = attemptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          attemptsList = await fetchUserAttempts(user.uid);
         }
 
         // Merge surgeries with their corresponding attempts.

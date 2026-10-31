@@ -8,6 +8,12 @@ export default [
   },
   js.configs.recommended,
   {
+    files: ["scripts/**/*.mjs", "worker/**/*.js"],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
     files: ["**/*.{js,jsx}"],
     plugins: {
       "react-hooks": reactHooks,

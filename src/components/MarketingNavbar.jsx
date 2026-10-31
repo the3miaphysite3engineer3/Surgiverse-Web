@@ -3,9 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useMediaQuery } from '@mui/material';
 import { useAuth } from '../hooks/useAuth';
 import { useThemeMode } from '../context/ThemeContext';
-import { auth, db } from '../firebase';
-import { signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { supabase } from '../supabase';
 import { META_QUEST_URL, MetaQuestLogo } from './MetaLogos';
 import './MarketingNavbar.css';
 
@@ -25,9 +23,9 @@ const MoonIcon = () => (
 const MarketingNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { mode, toggleTheme } = useThemeMode();
-  const [userRole, setUserRole] = useState(null);
+  const userRole = profile?.role ?? null;
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -48,20 +46,8 @@ const MarketingNavbar = () => {
       setScrolled(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll);
-
-    const fetchUserRole = async () => {
-        if (user) {
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) {
-            setUserRole(userDocSnap.data().role);
-          }
-        }
-    };
-    fetchUserRole();
-
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     if (isDesktopNav) setMenuOpen(false);
@@ -76,7 +62,7 @@ const MarketingNavbar = () => {
   }, [menuOpen]);
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
     closeMenu();
     navigate('/');
   };

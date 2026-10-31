@@ -84,6 +84,9 @@
 html[data-theme='dark'] .scope-container input { color-scheme: dark; }
 .scope-container input:-webkit-autofill { -webkit-text-fill-color: var(--sv-text); transition: background-color 9999s ease-in-out 0s; }
 .scope-container #authBtn { width: 100%; padding: 15px; background: var(--medical-blue); border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; font-family: inherit; font-size: 15px; }
+.scope-container #authBtn:disabled { opacity: 0.6; cursor: default; }
+.scope-container .auth-secondary-link { display: block; width: 100%; margin-top: 14px; padding: 8px; background: transparent; border: none; color: var(--sv-text-muted); font-size: 13.5px; font-weight: 600; text-align: center; cursor: pointer; font-family: inherit; text-decoration: underline; }
+.scope-container .auth-secondary-link:hover { color: var(--medical-blue); }
 
 .scope-container .login-footer-wrapper {
     position: relative;

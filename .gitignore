@@ -37,3 +37,9 @@ serviceAccount.json
 
 # Brand source material (73MB+ of raw screenshots; used copies live in public/).
 logos/
+
+# One-time Firestore export data (local only)
+scripts/export/
+
+# ZCode local working files
+.zcode/

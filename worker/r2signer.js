@@ -2,7 +2,7 @@
 //
 // Why this exists: the web app must NEVER hold the R2 secret (anything
 // bundled by Vite ships to every visitor's browser). The browser calls this
-// endpoint, it verifies the caller's Firebase ID token, validates the
+// endpoint, it verifies the caller's Supabase access token, validates the
 // requested keys, and returns short-lived SigV4 URLs. Zero dependencies.
 //
 // Deploy (needs wrangler + a Cloudflare account with the R2 bucket):
@@ -10,6 +10,8 @@
 //   cp wrangler.toml.example wrangler.toml   # fill in account_id
 //   wrangler secret put R2_ACCESS_KEY
 //   wrangler secret put R2_SECRET_KEY
+//   wrangler vars put SUPABASE_URL https://<ref>.supabase.co
+//   wrangler vars put SUPABASE_ANON_KEY <anon key>
 //   wrangler deploy
 // Then set VITE_R2_SIGNER_URL in the web app's .env to the worker URL.
 
@@ -131,29 +133,34 @@ export default {
       return json({ error: 'Use POST { keys: [...] }' }, 405, request);
     }
 
-    const { account, access, secret, bucket, projectId } = {
+    const { account, access, secret, bucket, supabaseUrl, supabaseAnonKey } = {
       account: env.R2_ACCOUNT,
       access: env.R2_ACCESS_KEY,
       secret: env.R2_SECRET_KEY,
       bucket: env.R2_BUCKET || 'surgvideorag',
-      projectId: env.FIREBASE_PROJECT_ID,
+      supabaseUrl: (env.SUPABASE_URL || '').replace(/\/+$/, ''),
+      supabaseAnonKey: env.SUPABASE_ANON_KEY,
     };
-    if (!account || !access || !secret || !projectId) {
+    if (!account || !access || !secret || !supabaseUrl || !supabaseAnonKey) {
       return json({ error: 'Signer misconfigured' }, 500, request);
     }
 
-    // 1. Verify the caller's Firebase ID token (must belong to this project).
-    const idToken = (request.headers.get('Authorization') || '').replace(
+    // 1. Verify the caller's Supabase access token. /auth/v1/user resolves
+    //    the JWT server-side and returns the user only when it is valid —
+    //    no crypto or shared secret needed in the worker.
+    const accessToken = (request.headers.get('Authorization') || '').replace(
       /^Bearer\s+/i,
       ''
     );
-    if (!idToken) return json({ error: 'Unauthorized' }, 401, request);
+    if (!accessToken) return json({ error: 'Unauthorized' }, 401, request);
     try {
-      const check = await fetch(
-        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`
-      );
-      const info = await check.json();
-      if (!check.ok || info.aud !== projectId) {
+      const check = await fetch(`${supabaseUrl}/auth/v1/user`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: supabaseAnonKey,
+        },
+      });
+      if (!check.ok) {
         return json({ error: 'Unauthorized' }, 401, request);
       }
     } catch {

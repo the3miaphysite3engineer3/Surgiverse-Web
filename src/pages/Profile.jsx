@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchUserProfile, fetchUserSettings, updateUserSettings } from '../lib/db';
 import { useAuth } from '../hooks/useAuth';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
@@ -16,6 +15,7 @@ const Profile = () => {
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
+    document.title = 'SurgiVerse - Profile';
     const fetchProfileData = async () => {
       if (!user) {
         setLoading(false);
@@ -24,26 +24,19 @@ const Profile = () => {
 
       try {
         setLoading(true);
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          setUserData(userDocSnap.data());
+        const profile = await fetchUserProfile(user.uid);
+        if (profile) {
+          setUserData(profile);
         } else {
-          console.log("No such user document!");
+          console.log("No such user row!");
         }
 
-        const settingsQuery = query(collection(db, 'config'), where('uid', '==', user.uid));
-        const settingsSnapshot = await getDocs(settingsQuery);
-
-        if (!settingsSnapshot.empty) {
-          const settingsData = settingsSnapshot.docs[0].data();
-          setUserSettings({
-            ...settingsData,
-            id: settingsSnapshot.docs[0].id
-          });
+        const settings = await fetchUserSettings(user.uid);
+        if (settings) {
+          setUserSettings(settings);
           setFormData({
-            ...settingsData,
-            AntiAliasing: settingsData.AntiAliasing === 'True'
+            ...settings,
+            AntiAliasing: settings.AntiAliasing === 'True' || settings.AntiAliasing === true,
           });
         } else {
           console.log("No userSettings document found for this user!");
@@ -72,24 +65,25 @@ const Profile = () => {
   const handleFormSubmit = async (event) => {
     event.preventDefault();
     if (!userSettings?.id) {
-      setError("Cannot update settings: user settings ID not found.");
+      setError("Cannot update settings: user settings row not found.");
       return;
     }
 
     try {
-      const settingsDocRef = doc(db, 'config', userSettings.id);
+      const { id, ...current } = userSettings;
       const updatedData = {
+        ...current,
         ...formData,
         AntiAliasing: formData.AntiAliasing ? 'True' : 'False',
         MasterVolume: formData.MasterVolume.toString(),
         SFXMusicVolume: formData.SFXMusicVolume.toString(),
         AmbientMusicVolume: formData.AmbientMusicVolume.toString(),
-      }
-      await updateDoc(settingsDocRef, updatedData);
+      };
+      await updateUserSettings(id, updatedData);
       setUserSettings(prev => ({ ...prev, ...formData, AntiAliasing: formData.AntiAliasing ? 'True' : 'False' }));
       setIsEditing(false);
     } catch (err) {
-      setError("Failed to update settings.");
+      setError(err?.message || "Failed to update settings.");
       console.error(err);
     }
   }
@@ -135,7 +129,9 @@ const Profile = () => {
 
                     <Typography variant="h6" sx={{ mt: 2 }}>Last Login:</Typography>
                     <Typography variant="body1">
-                      {userData.lastLogin?.seconds ? new Date(userData.lastLogin.seconds * 1000).toLocaleString() : 'N/A'}
+                      {userData.lastLogin && !Number.isNaN(Date.parse(userData.lastLogin))
+                        ? new Date(userData.lastLogin).toLocaleString()
+                        : 'N/A'}
                     </Typography>
                   </Box>
                 ) : (

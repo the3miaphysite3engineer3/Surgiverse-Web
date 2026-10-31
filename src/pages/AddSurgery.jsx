@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { addSurgery } from '../lib/db';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
 import { Box, Container, Paper, Typography, TextField, Button } from '@mui/material';
@@ -23,19 +22,14 @@ const AddSurgery = () => {
     setSuccess(false);
 
     try {
-      await addDoc(collection(db, 'surgeries'), {
-        title,
-        category,
-        description,
-        sceneName
-      });
+      await addSurgery({ title, category, description, sceneName });
       setSuccess(true);
       setTitle('');
       setCategory('');
       setDescription('');
       setSceneName('');
     } catch (err) {
-      setError('Failed to add surgery. Please try again.');
+      setError(err?.message || 'Failed to add surgery. Please try again.');
       console.error(err);
     }
   };

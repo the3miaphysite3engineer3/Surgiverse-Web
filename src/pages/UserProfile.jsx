@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { fetchUserProfile, updateUserNames } from '../lib/db';
 import { useAuth } from '../hooks/useAuth';
 import MarketingNavbar from '../components/MarketingNavbar';
 import MarketingFooter from '../components/MarketingFooter';
@@ -17,19 +16,18 @@ const UserProfile = () => {
 
   useEffect(() => {
     document.title = 'SurgiVerse - User Profile';
-    const fetchUserProfile = async () => {
+    const fetchUserProfileData = async () => {
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUserProfile(userData);
-          setFirstName(userData.firstName);
-          setLastName(userData.lastName);
+        const profile = await fetchUserProfile(user.uid);
+        if (profile) {
+          setUserProfile(profile);
+          setFirstName(profile.firstName);
+          setLastName(profile.lastName);
         } else {
           setError('User profile not found');
         }
       } catch (err) {
-        setError('Failed to fetch user profile.');
+        setError(err?.message || 'Failed to fetch user profile.');
         console.error(err);
       } finally {
         setLoading(false);
@@ -37,22 +35,18 @@ const UserProfile = () => {
     };
 
     if (user) {
-      fetchUserProfile();
+      fetchUserProfileData();
     }
   }, [user]);
 
   const handleUpdate = async () => {
     try {
-      const userDocRef = doc(db, 'users', user.uid);
-      await updateDoc(userDocRef, {
-        firstName,
-        lastName,
-      });
+      await updateUserNames(user.uid, { firstName, lastName });
       setUserProfile({ ...userProfile, firstName, lastName });
       setIsEditing(false);
-    } catch (error) {
-      setError('Failed to update profile.');
-      console.error(error);
+    } catch (err) {
+      setError(err?.message || 'Failed to update profile.');
+      console.error(err);
     }
   };
 
