@@ -91,7 +91,7 @@ export async function fetchSurgery(id) {
   return data ? mapSurgery(data) : null;
 }
 
-export async function addSurgery({ title, category, description, sceneName, viewSceneName, procedureName }) {
+export async function addSurgery({ title, category, description, sceneName, procedureName }) {
   const { data, error } = await supabase
     .from('surgeries')
     .insert({
@@ -99,27 +99,12 @@ export async function addSurgery({ title, category, description, sceneName, view
       category,
       description,
       sceneName,
-      viewSceneName: viewSceneName || null,
       ...(procedureName ? { procedureName } : {}),
     })
     .select('id')
     .single();
   throwIfError({ error }, 'Failed to add surgery');
   return data.id;
-}
-
-export async function updateSurgery(id, { title, category, description, sceneName, viewSceneName }) {
-  const { error } = await supabase
-    .from('surgeries')
-    .update({
-      title,
-      category,
-      description,
-      sceneName,
-      viewSceneName: viewSceneName || null,
-    })
-    .eq('id', id);
-  throwIfError({ error }, 'Failed to update surgery');
 }
 
 // ---- attempts --------------------------------------------------------------
