@@ -13,7 +13,8 @@ const Dashboard = () => {
   const [unmatchedAttempts, setUnmatchedAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const isProfessor = profile?.role === 'professor';
 
   useEffect(() => {
     document.title = 'SurgiVerse - Dashboard';
@@ -118,7 +119,12 @@ const Dashboard = () => {
                   )}
                 </Box>
 
-                <Box sx={{ mt: 'auto', textAlign: 'right' }}>
+                <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                  {isProfessor && (
+                    <Button component={Link} to={`/edit-surgery/${surgery.id}`} variant="outlined" color="primary">
+                      Edit
+                    </Button>
+                  )}
                   <Button component={Link} to={`/surgery/${surgery.id}`} variant="contained" color="primary">
                     View Details
                   </Button>

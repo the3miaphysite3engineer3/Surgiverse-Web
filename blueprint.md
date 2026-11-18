@@ -18,6 +18,7 @@ SurgiVerse is a web-based platform designed for surgical education and training.
 *   **Dashboard:** Displays a list of available surgeries.
 *   **Surgery Details:** Provides detailed information about each surgery, including default metrics and required steps.
 *   **Add Surgery:** Professors can add new surgeries with detailed parameters, including `sceneName` and `viewSceneName` for Unity integration.
+*   **Edit Surgery:** Professors can edit existing surgery details and both Unity scene names from the dashboard.
 *   **Grade Students:** Professors and TAs can grade student attempts.
 *   **Add Resources:** Professors can add educational resources.
 *   **Analytics:** Professors and TAs can view performance analytics.

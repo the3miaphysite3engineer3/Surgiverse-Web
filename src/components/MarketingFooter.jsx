@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 import EmailIcon from '@mui/icons-material/Email';
 import { META_QUEST_URL, MetaLogo, MetaQuestLogo } from './MetaLogos';
 import './MarketingFooter.css';
@@ -26,6 +27,9 @@ const MarketingFooter = () => {
           </a>
           <a href="https://www.linkedin.com/company/surgiverse26" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
             <LinkedInIcon fontSize="large" />
+          </a>
+          <a href="https://www.youtube.com/@SurgiVerse-w6q" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+            <YouTubeIcon fontSize="large" />
           </a>
           <a href="mailto:surgiverse28@gmail.com" aria-label="Email" title="surgiverse28@gmail.com">
             <EmailIcon fontSize="large" />
