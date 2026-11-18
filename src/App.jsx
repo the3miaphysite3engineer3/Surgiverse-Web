@@ -100,6 +100,14 @@ const ThemedApp = () => {
             }
           />
           <Route
+            path="/edit-surgery/:id"
+            element={
+              <ProfessorRoute>
+                <AddSurgery />
+              </ProfessorRoute>
+            }
+          />
+          <Route
             path="/grade-students"
             element={
               <TaProfessorRoute>

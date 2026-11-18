@@ -10,6 +10,7 @@
 alter table public.surgeries add column if not exists "procedureName" text not null default '';
 alter table public.surgeries add column if not exists "professorName" text;
 alter table public.surgeries add column if not exists "legacyId" text;
+alter table public.surgeries add column if not exists "viewSceneName" text;
 
 -- NULLs are distinct in Postgres, so multiple un-migrated rows are fine.
 create unique index if not exists surgeries_legacy_id_key
